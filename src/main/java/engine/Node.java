@@ -11,31 +11,28 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 
 @Data
-public abstract class Operator {
-    boolean async = true;
+public class Node {
+    boolean async;
     String name;
     Graph engine;
     AtomicInteger depends;
-    List<Operator> consumers;
+    List<Node> consumers;
+    Operator operator;
 
-    public Operator() {
+    public Node() {
         depends = new AtomicInteger(0);
         consumers = new ArrayList<>();
     }
 
-    public abstract void invoke();
-
-    public abstract void register();
-
-    public <T extends Operator> T dependOn(String dependName) {
+    public Node dependOn(String dependName) {
         this.incDepend();
-        Operator dependOperator = engine.getOperator(dependName);
-        dependOperator.addConsumer(this);
+        Node dependNode = engine.getNode(dependName);
+        dependNode.addConsumer(this);
 
-        return (T) dependOperator;
+        return dependNode;
     }
 
-    void addConsumer(Operator consumer) {
+    void addConsumer(Node consumer) {
         consumers.add(consumer);
     }
 
@@ -54,7 +51,7 @@ public abstract class Operator {
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof Operator) {
-            return ((Operator) obj).getName().equals(name);
+            return ((Node) obj).getName().equals(name);
         } else {
             return false;
         }

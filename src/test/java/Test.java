@@ -1,7 +1,7 @@
 import com.alibaba.fastjson.JSONObject;
-import engine.Graph;
-import engine.Operator;
-import engine.OperatorConfig;
+import engine.*;
+import engine.Node;
+import engine.NodeConfig;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -13,9 +13,6 @@ import java.util.Map;
  */
 public class Test {
     public static class FakeOperator extends Operator {
-        public FakeOperator() {
-            setName("FakeOperator");
-        }
 
         @Override
         public void invoke() {
@@ -29,10 +26,6 @@ public class Test {
     }
 
     public static class FakeOperator1 extends Operator {
-        public FakeOperator1() {
-            setName("FakeOperator1");
-        }
-
         @Override
         public void invoke() {
             System.out.println("invoke: " + this.getClass().getSimpleName());
@@ -46,10 +39,6 @@ public class Test {
     }
 
     public static class FakeOperator2 extends Operator {
-        public FakeOperator2() {
-            setName("FakeOperator2");
-        }
-
         @Override
         public void invoke() {
             System.out.println("invoke: " + this.getClass().getSimpleName());
@@ -64,10 +53,6 @@ public class Test {
     }
 
     public static class FakeOperator3 extends Operator {
-        public FakeOperator3() {
-            setName("FakeOperator3");
-        }
-
         @Override
         public void invoke() {
             System.out.println("invoke: " + this.getClass().getSimpleName());
@@ -75,6 +60,7 @@ public class Test {
 
         @Override
         public void register() {
+            dependOn("FakeOperator1");
         }
     }
 
@@ -85,25 +71,29 @@ public class Test {
         map.put("FakeOperator2", FakeOperator2.class);
         map.put("FakeOperator3", FakeOperator3.class);
 
-        List<OperatorConfig> operatorConfigs = new ArrayList<>();
-        OperatorConfig operatorConfig = new OperatorConfig();
-        operatorConfig.setName("FakeOperator");
-        operatorConfigs.add(operatorConfig);
+        List<NodeConfig> nodeConfigs = new ArrayList<>();
+        NodeConfig nodeConfig = new NodeConfig();
+        nodeConfig.setName("FakeOperator");
+        nodeConfig.setOperator("FakeOperator");
+        nodeConfigs.add(nodeConfig);
 
-        operatorConfig = new OperatorConfig();
-        operatorConfig.setName("FakeOperator1");
-        operatorConfigs.add(operatorConfig);
+        nodeConfig = new NodeConfig();
+        nodeConfig.setName("FakeOperator1");
+        nodeConfig.setOperator("FakeOperator1");
+        nodeConfigs.add(nodeConfig);
 
-        operatorConfig = new OperatorConfig();
-        operatorConfig.setName("FakeOperator2");
-        operatorConfigs.add(operatorConfig);
+        nodeConfig = new NodeConfig();
+        nodeConfig.setName("FakeOperator2");
+        nodeConfig.setOperator("FakeOperator2");
+        nodeConfigs.add(nodeConfig);
 
-        operatorConfig = new OperatorConfig();
-        operatorConfig.setName("FakeOperator3");
-        operatorConfigs.add(operatorConfig);
+        nodeConfig = new NodeConfig();
+        nodeConfig.setName("FakeOperator3");
+        nodeConfig.setOperator("FakeOperator3");
+        nodeConfigs.add(nodeConfig);
 
         Graph graph = new Graph();
-        graph.setOperatorConfigs(operatorConfigs);
+        graph.setNodeConfigs(nodeConfigs);
         graph.setClassMap(map);
 
         System.out.println(JSONObject.toJSONString(graph));

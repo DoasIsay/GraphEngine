@@ -7,6 +7,7 @@ import lombok.Data;
  */
 
 @Data
-public class OperatorConfig {
+public class NodeConfig {
     String name;
+    String operator;
 }

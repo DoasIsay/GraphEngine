@@ -8,11 +8,8 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author xiewenwu
  */
-public class Executor {
-    static public void stop() {
-        threadPoolExecutor.shutdown();
-    }
 
+public class Executor {
     static ThreadPoolExecutor threadPoolExecutor= new ThreadPoolExecutor(
             1,
             64,
@@ -20,25 +17,29 @@ public class Executor {
             TimeUnit.MINUTES,
             new SynchronousQueue<>());
 
-    static void notify(List<Operator> operators) {
-        operators.forEach(operator -> {
-            if (operator.decDepend() == 0) {
-                System.out.println("notify " + operator.getName());
-                Executor.execute(operator);
-                notify(operator.getConsumers());
+    static void notify(List<Node> nodes) {
+        nodes.forEach(node -> {
+            if (node.decDepend() == 0) {
+                System.out.println("notify " + node.getName());
+                Executor.execute(node);
+                notify(node.getConsumers());
             }
         });
     }
 
-    public static void execute(Operator operator) {
-        if (operator.isAsync()) {
+    public static void execute(Node node) {
+        if (node.isAsync()) {
             threadPoolExecutor.submit(() -> {
-                operator.invoke();
-                notify(operator.getConsumers());
+                node.getOperator().invoke();
+                notify(node.getConsumers());
             });
         } else {
-            operator.invoke();
-            notify(operator.getConsumers());
+            node.getOperator().invoke();
+            notify(node.getConsumers());
         }
+    }
+
+    public static void stop() {
+        threadPoolExecutor.shutdown();
     }
 }

@@ -13,25 +13,33 @@ import java.util.*;
 @Setter
 public class Graph {
     Map<String, Class<? extends Operator>> classMap = new HashMap<>();
-    Map<String, Operator> operatorMap = new HashMap<>();
-    Set<Operator> deadOperator = new HashSet<>();
-    Set<Operator> sourceOperator = new HashSet<>();
-    Set<Operator> processOperator = new HashSet<>();
-    Set<Operator> sinkOperator = new HashSet<>();
-    List<OperatorConfig> operatorConfigs = Collections.emptyList();
+    Map<String, Node> nodeMap = new HashMap<>();
+
+    Set<Node> deadNode = new HashSet<>();
+    Set<Node> sourceNode = new HashSet<>();
+    Set<Node> processNode = new HashSet<>();
+    Set<Node> sinkNode = new HashSet<>();
+
+    List<NodeConfig> nodeConfigs = Collections.emptyList();
 
     public Graph() {
     }
 
-    public void addOperator(Operator operator) {
-        operatorMap.put(operator.getName(), operator);
+    public void addNode(Node node) {
+        nodeMap.put(node.getName(), node);
     }
 
     void transform() {
-        for (OperatorConfig config : operatorConfigs) {
+        for (NodeConfig config : nodeConfigs) {
             String name = config.getName();
             try {
-                addOperator(classMap.get(name).newInstance());
+                Node node = new Node();
+                Operator operator = classMap.get(name).newInstance();
+                operator.setNode(node);
+
+                node.setName(name);
+                node.setOperator(operator);
+                addNode(node);
             } catch (InstantiationException e) {
                 e.printStackTrace();
             } catch (IllegalAccessException e) {
@@ -41,36 +49,36 @@ public class Graph {
     }
 
     void perf() {
-        Iterator<Map.Entry<String, Operator>> iterator = operatorMap.entrySet().iterator();
+        Iterator<Map.Entry<String, Node>> iterator = nodeMap.entrySet().iterator();
         while (iterator.hasNext()) {
-            Map.Entry<String, Operator> entry = iterator.next();
-            Operator operator = entry.getValue();
-            List<Operator> consumers = operator.getConsumers();
+            Map.Entry<String, Node> entry = iterator.next();
+            Node Node = entry.getValue();
+            List<Node> consumers = Node.getConsumers();
 
-            if (operator.getDepends() == 0 && (consumers == null || consumers.isEmpty())) {
+            if (Node.getDepends() == 0 && (consumers == null || consumers.isEmpty())) {
                 iterator.remove();
-                deadOperator.add(operator);
+                deadNode.add(Node);
                 continue;
             }
 
-            if (operator.getDepends() == 0) {
-                sourceOperator.add(operator);
+            if (Node.getDepends() == 0) {
+                sourceNode.add(Node);
                 continue;
             }
 
             if (consumers == null || consumers.isEmpty()) {
-                sinkOperator.add(operator);
+                sinkNode.add(Node);
                 continue;
             }
 
-            processOperator.add(operator);
+            processNode.add(Node);
         }
     }
 
     void generate() {
-        operatorMap.values().forEach(operator -> {
-            operator.setEngine(this);
-            operator.register();
+        nodeMap.values().forEach(node -> {
+            node.setEngine(this);
+            node.getOperator().register();
         });
     }
 
@@ -81,16 +89,14 @@ public class Graph {
     }
 
     public void start() {
-        sourceOperator.forEach(operator -> {
-            Executor.execute(operator);
-        });
+        sourceNode.forEach(Executor::execute);
     }
 
     public static void stop() {
         Executor.stop();
     }
 
-    public <T extends Operator> T getOperator(String name) {
-        return (T) operatorMap.get(name);
+    public Node getNode(String name) {
+        return nodeMap.get(name);
     }
 }
