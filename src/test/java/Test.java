@@ -21,7 +21,7 @@ public class Test {
 
         @Override
         public void register() {
-
+            dependOn("FakeOperator3");
         }
     }
 
@@ -47,7 +47,6 @@ public class Test {
 
         @Override
         public void register() {
-            dependOn("FakeOperator1");
             dependOn("FakeOperator3");
         }
     }
@@ -60,7 +59,7 @@ public class Test {
 
         @Override
         public void register() {
-            dependOn("FakeOperator1");
+
         }
     }
 

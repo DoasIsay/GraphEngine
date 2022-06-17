@@ -16,31 +16,33 @@ public class Node {
     String name;
     Graph engine;
     AtomicInteger depends;
-    List<Node> consumers;
+    List<Node> inNodes;
+    List<Node> outNodes;
     Operator operator;
 
     public Node() {
         depends = new AtomicInteger(0);
-        consumers = new ArrayList<>();
+        inNodes = new ArrayList<>();
+        outNodes = new ArrayList<>();
     }
 
     public Node dependOn(String dependName) {
-        this.incDepend();
+        this.incDepends();
         Node dependNode = engine.getNode(dependName);
-        dependNode.addConsumer(this);
-
+        inNodes.add(dependNode);
+        dependNode.addOutNode(this);
         return dependNode;
     }
 
-    void addConsumer(Node consumer) {
-        consumers.add(consumer);
+    void addOutNode(Node consumer) {
+        outNodes.add(consumer);
     }
 
-    void incDepend() {
+    void incDepends() {
         depends.incrementAndGet();
     }
 
-    public int decDepend() {
+    public int decDepends() {
         return depends.decrementAndGet();
     }
 
@@ -48,6 +50,17 @@ public class Node {
         return depends.get();
     }
 
+    public void resetDepends() {
+        if (inNodes == null) {
+            depends.set(0);
+            return;
+        }
+        depends.set(inNodes.size());
+    }
+
+    public void register() {
+        operator.register();
+    }
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof Operator) {

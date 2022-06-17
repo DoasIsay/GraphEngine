@@ -1,5 +1,6 @@
 package engine;
 
+import com.alibaba.fastjson.JSON;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -15,10 +16,10 @@ public class Graph {
     Map<String, Class<? extends Operator>> classMap = new HashMap<>();
     Map<String, Node> nodeMap = new HashMap<>();
 
-    Set<Node> deadNode = new HashSet<>();
-    Set<Node> sourceNode = new HashSet<>();
-    Set<Node> processNode = new HashSet<>();
-    Set<Node> sinkNode = new HashSet<>();
+    List<Node> deadNodes = new ArrayList<>();
+    List<Node> sourceNodes = new ArrayList<>();
+    List<Node> processNodes = new ArrayList<>();
+    List<Node> sinkNodes = new ArrayList<>();
 
     List<NodeConfig> nodeConfigs = Collections.emptyList();
 
@@ -30,14 +31,14 @@ public class Graph {
     }
 
     void transform() {
-        for (NodeConfig config : nodeConfigs) {
-            String name = config.getName();
+        nodeConfigs.forEach(nodeConfig -> {
+            String name = nodeConfig.getName();
             try {
                 Node node = new Node();
                 Operator operator = classMap.get(name).newInstance();
                 operator.setNode(node);
-
                 node.setName(name);
+                node.setEngine(this);
                 node.setOperator(operator);
                 addNode(node);
             } catch (InstantiationException e) {
@@ -45,51 +46,49 @@ public class Graph {
             } catch (IllegalAccessException e) {
                 e.printStackTrace();
             }
-        }
+        });
     }
 
     void perf() {
         Iterator<Map.Entry<String, Node>> iterator = nodeMap.entrySet().iterator();
         while (iterator.hasNext()) {
             Map.Entry<String, Node> entry = iterator.next();
-            Node Node = entry.getValue();
-            List<Node> consumers = Node.getConsumers();
+            Node node = entry.getValue();
+            List<Node> consumers = node.getOutNodes();
 
-            if (Node.getDepends() == 0 && (consumers == null || consumers.isEmpty())) {
+            if (node.getDepends() == 0 && (consumers == null || consumers.isEmpty())) {
                 iterator.remove();
-                deadNode.add(Node);
+                deadNodes.add(node);
                 continue;
             }
 
-            if (Node.getDepends() == 0) {
-                sourceNode.add(Node);
+            if (node.getDepends() == 0) {
+                sourceNodes.add(node);
                 continue;
             }
 
             if (consumers == null || consumers.isEmpty()) {
-                sinkNode.add(Node);
+                sinkNodes.add(node);
                 continue;
             }
 
-            processNode.add(Node);
+            processNodes.add(node);
         }
     }
 
     void generate() {
-        nodeMap.values().forEach(node -> {
-            node.setEngine(this);
-            node.getOperator().register();
-        });
+        nodeMap.values().forEach(Node::register);
     }
 
     public void build() {
         transform();
         generate();
         perf();
+        check();
     }
 
     public void start() {
-        sourceNode.forEach(Executor::execute);
+        sourceNodes.forEach(Executor::execute);
     }
 
     public static void stop() {
@@ -98,5 +97,25 @@ public class Graph {
 
     public Node getNode(String name) {
         return nodeMap.get(name);
+    }
+
+    void check() {
+        Map<String, Node> tmp = new HashMap<>(nodeMap);
+        removeSourceNode(sourceNodes, tmp);
+        if (!tmp.isEmpty()) {
+            throw new RuntimeException("graph has cycle: " + JSON.toJSONString(tmp));
+        }
+
+        nodeMap.values().forEach(Node::resetDepends);
+    }
+
+    void removeSourceNode(List<Node> sourceNodes, Map<String, Node> nodeMap) {
+        sourceNodes.forEach(sourceNode -> {
+            if (sourceNode.getDepends() == 0) {
+                nodeMap.remove(sourceNode.getName());
+                sourceNode.getOutNodes().forEach(Node::decDepends);
+                removeSourceNode(sourceNode.getOutNodes(), nodeMap);
+            }
+        });
     }
 }

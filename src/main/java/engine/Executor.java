@@ -19,10 +19,10 @@ public class Executor {
 
     static void notify(List<Node> nodes) {
         nodes.forEach(node -> {
-            if (node.decDepend() == 0) {
+            if (node.decDepends() == 0) {
                 System.out.println("notify " + node.getName());
                 Executor.execute(node);
-                notify(node.getConsumers());
+                notify(node.getOutNodes());
             }
         });
     }
@@ -31,11 +31,11 @@ public class Executor {
         if (node.isAsync()) {
             threadPoolExecutor.submit(() -> {
                 node.getOperator().invoke();
-                notify(node.getConsumers());
+                notify(node.getOutNodes());
             });
         } else {
             node.getOperator().invoke();
-            notify(node.getConsumers());
+            notify(node.getOutNodes());
         }
     }
 
