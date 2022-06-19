@@ -16,8 +16,8 @@ public abstract class Operator {
 
     public abstract void register();
 
-    public Operator dependOn(String dependName) {
-        return Optional.ofNullable(node.dependOn(dependName))
+    public <T extends Operator> T dependOn(String dependName) {
+        return (T) Optional.ofNullable(node.dependOn(dependName))
                 .map(node -> node.getOperator())
                 .orElse(null);
     }

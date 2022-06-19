@@ -12,9 +12,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @Data
 public class Node {
+    Graph graph;
     boolean async;
     String name;
-    Graph engine;
     AtomicInteger depends;
     List<Node> inNodes;
     List<Node> outNodes;
@@ -28,14 +28,22 @@ public class Node {
 
     public Node dependOn(String dependName) {
         this.incDepends();
-        Node dependNode = engine.getNode(dependName);
-        inNodes.add(dependNode);
+        Node dependNode = graph.getNode(dependName);
+        if (dependNode == null) {
+            throw new RuntimeException("not found node: " + dependName);
+        }
+
+        addInNode(dependNode);
         dependNode.addOutNode(this);
         return dependNode;
     }
 
-    void addOutNode(Node consumer) {
-        outNodes.add(consumer);
+    void addInNode(Node node) {
+        inNodes.add(node);
+    }
+
+    void addOutNode(Node node) {
+        outNodes.add(node);
     }
 
     void incDepends() {
@@ -58,9 +66,6 @@ public class Node {
         depends.set(inNodes.size());
     }
 
-    public void register() {
-        operator.register();
-    }
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof Operator) {
@@ -73,5 +78,10 @@ public class Node {
     @Override
     public int hashCode() {
         return name.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return getName() + "(" + getInNodes().size() + ", " + getOutNodes().size() + ")";
     }
 }

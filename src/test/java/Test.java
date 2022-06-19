@@ -1,7 +1,6 @@
-import com.alibaba.fastjson.JSONObject;
-import engine.*;
-import engine.Node;
+import engine.Graph;
 import engine.NodeConfig;
+import engine.Operator;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -12,8 +11,7 @@ import java.util.Map;
  * @author xiewenwu
  */
 public class Test {
-    public static class FakeOperator extends Operator {
-
+    public static class TestOperator1 extends Operator {
         @Override
         public void invoke() {
             System.out.println("invoke: " + this.getClass().getSimpleName());
@@ -21,37 +19,34 @@ public class Test {
 
         @Override
         public void register() {
-            dependOn("FakeOperator3");
         }
     }
 
-    public static class FakeOperator1 extends Operator {
+    public static class TestOperator2 extends Operator {
         @Override
         public void invoke() {
             System.out.println("invoke: " + this.getClass().getSimpleName());
         }
 
-
         @Override
         public void register() {
-            dependOn("FakeOperator");
+            dependOn("TestOperator5");
+            dependOn("TestOperator1");
         }
     }
 
-    public static class FakeOperator2 extends Operator {
+    public static class TestOperator3 extends Operator {
         @Override
         public void invoke() {
             System.out.println("invoke: " + this.getClass().getSimpleName());
         }
 
-
         @Override
         public void register() {
-            dependOn("FakeOperator3");
         }
     }
 
-    public static class FakeOperator3 extends Operator {
+    public static class TestOperator4 extends Operator {
         @Override
         public void invoke() {
             System.out.println("invoke: " + this.getClass().getSimpleName());
@@ -59,49 +54,111 @@ public class Test {
 
         @Override
         public void register() {
+            dependOn("TestOperator2");
+            dependOn("TestOperator1");
+            dependOn("TestOperator5");
+            dependOn("TestOperator3");
+        }
+    }
 
+    public static class TestOperator5 extends Operator {
+        @Override
+        public void invoke() {
+            System.out.println("invoke: " + this.getClass().getSimpleName());
+        }
+
+        @Override
+        public void register() {
+            dependOn("TestOperator1");
+            dependOn("TestOperator7");
+        }
+    }
+
+    public static class TestOperator6 extends Operator {
+        @Override
+        public void invoke() {
+            System.out.println("invoke: " + this.getClass().getSimpleName());
+        }
+
+        @Override
+        public void register() {
+            dependOn("TestOperator3");
+            dependOn("TestOperator4");
+        }
+    }
+
+    public static class TestOperator7 extends Operator {
+        @Override
+        public void invoke() {
+            System.out.println("invoke: " + this.getClass().getSimpleName());
+        }
+
+        @Override
+        public void register() {
+            dependOn("TestOperator3");
+            //dependOn("TestOperator2");
         }
     }
 
     public static void main(String[] args) throws InterruptedException {
-        Map<String, Class<? extends Operator>> map = new HashMap<>();
-        map.put("FakeOperator", FakeOperator.class);
-        map.put("FakeOperator1", FakeOperator1.class);
-        map.put("FakeOperator2", FakeOperator2.class);
-        map.put("FakeOperator3", FakeOperator3.class);
+        Map<String, Class<? extends Operator>> classMap = new HashMap<>();
+        classMap.put("TestOperator1", TestOperator1.class);
+        classMap.put("TestOperator2", TestOperator2.class);
+        classMap.put("TestOperator3", TestOperator3.class);
+        classMap.put("TestOperator4", TestOperator4.class);
+        classMap.put("TestOperator5", TestOperator5.class);
+        classMap.put("TestOperator6", TestOperator6.class);
+        classMap.put("TestOperator7", TestOperator7.class);
 
         List<NodeConfig> nodeConfigs = new ArrayList<>();
         NodeConfig nodeConfig = new NodeConfig();
-        nodeConfig.setName("FakeOperator");
-        nodeConfig.setOperator("FakeOperator");
+        nodeConfig.setName("TestOperator1");
+        nodeConfig.setOperator("TestOperator1");
         nodeConfigs.add(nodeConfig);
 
         nodeConfig = new NodeConfig();
-        nodeConfig.setName("FakeOperator1");
-        nodeConfig.setOperator("FakeOperator1");
+        nodeConfig.setName("TestOperator2");
+        nodeConfig.setOperator("TestOperator2");
         nodeConfigs.add(nodeConfig);
 
         nodeConfig = new NodeConfig();
-        nodeConfig.setName("FakeOperator2");
-        nodeConfig.setOperator("FakeOperator2");
+        nodeConfig.setName("TestOperator3");
+        nodeConfig.setOperator("TestOperator3");
         nodeConfigs.add(nodeConfig);
 
         nodeConfig = new NodeConfig();
-        nodeConfig.setName("FakeOperator3");
-        nodeConfig.setOperator("FakeOperator3");
+        nodeConfig.setName("TestOperator4");
+        nodeConfig.setOperator("TestOperator4");
+        nodeConfigs.add(nodeConfig);
+
+        nodeConfig = new NodeConfig();
+        nodeConfig.setName("TestOperator5");
+        nodeConfig.setOperator("TestOperator5");
+        nodeConfigs.add(nodeConfig);
+
+        nodeConfig = new NodeConfig();
+        nodeConfig.setName("TestOperator6");
+        nodeConfig.setOperator("TestOperator6");
+        nodeConfigs.add(nodeConfig);
+
+        nodeConfig = new NodeConfig();
+        nodeConfig.setName("TestOperator7");
+        nodeConfig.setOperator("TestOperator7");
         nodeConfigs.add(nodeConfig);
 
         Graph graph = new Graph();
+        graph.setClassMap(classMap);
         graph.setNodeConfigs(nodeConfigs);
-        graph.setClassMap(map);
 
-        System.out.println(JSONObject.toJSONString(graph));
         graph.build();
-        System.out.println(JSONObject.toJSONString(graph));
+        System.out.println("source:  " + graph.getSourceNodes());
+        System.out.println("process: " + graph.getProcessNodes());
+        System.out.println("sink:    " + graph.getSinkNodes());
+
+        System.out.println(graph.toString());
         graph.start();
 
         Thread.sleep(10000);
         graph.stop();
-
     }
 }

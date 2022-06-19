@@ -1,6 +1,5 @@
 package engine;
 
-import com.alibaba.fastjson.JSON;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -13,7 +12,7 @@ import java.util.*;
 @Getter
 @Setter
 public class Graph {
-    Map<String, Class<? extends Operator>> classMap = new HashMap<>();
+    Map<String, Class<? extends Operator>> classMap = Collections.emptyMap();
     Map<String, Node> nodeMap = new HashMap<>();
 
     List<Node> deadNodes = new ArrayList<>();
@@ -27,6 +26,9 @@ public class Graph {
     }
 
     public void addNode(Node node) {
+        if (nodeMap == null) {
+            nodeMap = new HashMap<>();
+        }
         nodeMap.put(node.getName(), node);
     }
 
@@ -36,10 +38,12 @@ public class Graph {
             try {
                 Node node = new Node();
                 Operator operator = classMap.get(name).newInstance();
-                operator.setNode(node);
+
                 node.setName(name);
-                node.setEngine(this);
+                node.setGraph(this);
                 node.setOperator(operator);
+
+                operator.setNode(node);
                 addNode(node);
             } catch (InstantiationException e) {
                 e.printStackTrace();
@@ -77,7 +81,7 @@ public class Graph {
     }
 
     void generate() {
-        nodeMap.values().forEach(Node::register);
+        nodeMap.values().forEach(node -> node.getOperator().register());
     }
 
     public void build() {
@@ -100,22 +104,62 @@ public class Graph {
     }
 
     void check() {
-        Map<String, Node> tmp = new HashMap<>(nodeMap);
-        removeSourceNode(sourceNodes, tmp);
-        if (!tmp.isEmpty()) {
-            throw new RuntimeException("graph has cycle: " + JSON.toJSONString(tmp));
+        Set<Node> nodes = new HashSet<>(nodeMap.values());
+        removeSourceNode(sourceNodes, nodes);
+        if (!nodes.isEmpty()) {
+            throw new RuntimeException("graph has cycle: " + nodes);
         }
 
         nodeMap.values().forEach(Node::resetDepends);
     }
 
-    void removeSourceNode(List<Node> sourceNodes, Map<String, Node> nodeMap) {
+    void removeSourceNode(List<Node> sourceNodes, Set<Node> nodes) {
         sourceNodes.forEach(sourceNode -> {
             if (sourceNode.getDepends() == 0) {
-                nodeMap.remove(sourceNode.getName());
+                nodes.remove(sourceNode);
                 sourceNode.getOutNodes().forEach(Node::decDepends);
-                removeSourceNode(sourceNode.getOutNodes(), nodeMap);
+                removeSourceNode(sourceNode.getOutNodes(), nodes);
             }
         });
+    }
+
+    StringBuilder padding(StringBuilder sb, int size) {
+        for (int i=0; i < size; ++i) {
+            sb.append(" ");
+        }
+        return sb;
+    }
+
+    void toString(StringBuilder father, List<Node> nodes) {
+        Iterator<Node> iterable = nodes.iterator();
+        while (iterable.hasNext()) {
+            Node node = iterable.next();
+            StringBuilder child = new StringBuilder(father);
+            father.append(" -> ").append(node);
+            toString(father, node.getOutNodes());
+
+            int start = child.lastIndexOf("\n");
+            int end = child.length();
+            if (iterable.hasNext()) {
+                father.append(" -> end").append("\n");
+                padding(father, end - start - 1);
+            }
+        }
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("graph:\n");
+
+        sourceNodes.forEach(node -> {
+            StringBuilder path = new StringBuilder();
+            path.append("    start -> ").append(node);
+            toString(path, node.getOutNodes());
+            path.append(" -> end").append("\n\n");
+            sb.append(path);
+        });
+
+        return sb.toString();
     }
 }

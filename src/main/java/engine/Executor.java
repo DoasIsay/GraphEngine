@@ -12,8 +12,8 @@ import java.util.concurrent.TimeUnit;
 public class Executor {
     static ThreadPoolExecutor threadPoolExecutor= new ThreadPoolExecutor(
             1,
-            64,
-            10,
+            Runtime.getRuntime().availableProcessors(),
+            1,
             TimeUnit.MINUTES,
             new SynchronousQueue<>());
 
@@ -31,10 +31,12 @@ public class Executor {
         if (node.isAsync()) {
             threadPoolExecutor.submit(() -> {
                 node.getOperator().invoke();
+                System.out.println(node.getName());
                 notify(node.getOutNodes());
             });
         } else {
             node.getOperator().invoke();
+            System.out.println(node.getName());
             notify(node.getOutNodes());
         }
     }
