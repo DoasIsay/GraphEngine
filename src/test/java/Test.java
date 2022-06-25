@@ -1,6 +1,4 @@
-import engine.Graph;
-import engine.NodeConfig;
-import engine.Operator;
+import engine.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -11,10 +9,18 @@ import java.util.Map;
  * @author xiewenwu
  */
 public class Test {
-    public static class TestOperator1 extends Operator {
+    public static class TestOperator1 extends Operator<String> {
+        String output;
+
         @Override
-        public void invoke() {
-            System.out.println("invoke: " + this.getClass().getSimpleName());
+        public void clean() {
+            output = null;
+        }
+
+        @Override
+        public void invoke(String value) {
+            output = value;
+            System.out.println("invoke " + this.getClass().getSimpleName() + " output: " + output);
         }
 
         @Override
@@ -22,10 +28,18 @@ public class Test {
         }
     }
 
-    public static class TestOperator2 extends Operator {
+    public static class TestOperator2 extends Operator<String> {
+        String output;
+
         @Override
-        public void invoke() {
-            System.out.println("invoke: " + this.getClass().getSimpleName());
+        public void clean() {
+            output = null;
+        }
+
+        @Override
+        public void invoke(String value) {
+            output = value;
+            System.out.println("invoke " + this.getClass().getSimpleName() + " output: " + output);
         }
 
         @Override
@@ -35,10 +49,18 @@ public class Test {
         }
     }
 
-    public static class TestOperator3 extends Operator {
+    public static class TestOperator3 extends Operator<String> {
+        String output;
+
         @Override
-        public void invoke() {
-            System.out.println("invoke: " + this.getClass().getSimpleName());
+        public void clean() {
+            output = null;
+        }
+
+        @Override
+        public void invoke(String value) {
+            output = value;
+            System.out.println("invoke " + this.getClass().getSimpleName() + " output: " + output);
         }
 
         @Override
@@ -46,10 +68,18 @@ public class Test {
         }
     }
 
-    public static class TestOperator4 extends Operator {
+    public static class TestOperator4 extends Operator<String> {
+        String output;
+
         @Override
-        public void invoke() {
-            System.out.println("invoke: " + this.getClass().getSimpleName());
+        public void clean() {
+            output = null;
+        }
+
+        @Override
+        public void invoke(String value) {
+            output = value;
+            System.out.println("invoke " + this.getClass().getSimpleName() + " output: " + output);
         }
 
         @Override
@@ -61,10 +91,18 @@ public class Test {
         }
     }
 
-    public static class TestOperator5 extends Operator {
+    public static class TestOperator5 extends Operator<String> {
+        String output;
+
         @Override
-        public void invoke() {
-            System.out.println("invoke: " + this.getClass().getSimpleName());
+        public void clean() {
+            output = null;
+        }
+
+        @Override
+        public void invoke(String value) {
+            output = value;
+            System.out.println("invoke " + this.getClass().getSimpleName() + " output: " + output);
         }
 
         @Override
@@ -74,10 +112,18 @@ public class Test {
         }
     }
 
-    public static class TestOperator6 extends Operator {
+    public static class TestOperator6 extends Operator<String> {
+        String output;
+
         @Override
-        public void invoke() {
-            System.out.println("invoke: " + this.getClass().getSimpleName());
+        public void clean() {
+            output = null;
+        }
+
+        @Override
+        public void invoke(String value) {
+            output = value;
+            System.out.println("invoke " + this.getClass().getSimpleName() + " output: " + output);
         }
 
         @Override
@@ -87,10 +133,18 @@ public class Test {
         }
     }
 
-    public static class TestOperator7 extends Operator {
+    public static class TestOperator7 extends Operator<String> {
+        String output;
+
         @Override
-        public void invoke() {
-            System.out.println("invoke: " + this.getClass().getSimpleName());
+        public void clean() {
+            output = null;
+        }
+
+        @Override
+        public void invoke(String value) {
+            output = value;
+            System.out.println("invoke " + this.getClass().getSimpleName() + " output: " + output);
         }
 
         @Override
@@ -100,7 +154,7 @@ public class Test {
         }
     }
 
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) throws Exception {
         Map<String, Class<? extends Operator>> classMap = new HashMap<>();
         classMap.put("TestOperator1", TestOperator1.class);
         classMap.put("TestOperator2", TestOperator2.class);
@@ -146,19 +200,21 @@ public class Test {
         nodeConfig.setOperator("TestOperator7");
         nodeConfigs.add(nodeConfig);
 
-        Graph graph = new Graph();
+        GraphPool graphPool = new GraphPool(classMap, nodeConfigs);
+        Graph graph = graphPool.getResource();
         graph.setClassMap(classMap);
         graph.setNodeConfigs(nodeConfigs);
 
-        graph.build();
         System.out.println("source:  " + graph.getSourceNodes());
         System.out.println("process: " + graph.getProcessNodes());
         System.out.println("sink:    " + graph.getSinkNodes());
 
         System.out.println(graph.toString());
-        graph.start();
+        graph.run("test");
 
+        System.out.println(graphPool.toString());
         Thread.sleep(10000);
-        graph.stop();
+        graphPool.returnResource(graph);
+        Executor.stop();
     }
 }

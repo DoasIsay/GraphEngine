@@ -17,27 +17,43 @@ public class Executor {
             TimeUnit.MINUTES,
             new SynchronousQueue<>());
 
-    static void notify(List<Node> nodes) {
+    static <T> void notify(List<Node> nodes, T value) {
         nodes.forEach(node -> {
-            if (node.decDepends() == 0) {
+            int depends = node.decDepends();
+            if (depends == 0) {
                 System.out.println("notify " + node.getName());
-                Executor.execute(node);
-                notify(node.getOutNodes());
+                Executor.execute(node, value);
+                notify(node.getOutNodes(), value);
+            } else if (depends < 0) {
+                System.out.println(node.getName() + " depends " + depends);
+                //throw new RuntimeException(node.getName() + " invalid depends: " + depends);
             }
         });
     }
 
-    public static void execute(Node node) {
+    public static <T> void execute(Node node, T value) {
         if (node.isAsync()) {
-            threadPoolExecutor.submit(() -> {
-                node.getOperator().invoke();
-                System.out.println(node.getName());
-                notify(node.getOutNodes());
-            });
+            threadPoolExecutor.submit(() -> invoke(node, value));
         } else {
-            node.getOperator().invoke();
-            System.out.println(node.getName());
-            notify(node.getOutNodes());
+            invoke(node, value);
+        }
+    }
+
+    static <T> void invoke(Node node, T value) {
+        Operator operator = node.getOperator();
+        try {
+            operator.invoke(value);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            notify(node.getOutNodes(), value);
+            Graph graph = node.getGraph();
+            int running = graph.decRunning();
+            if (running ==  0) {
+                graph.close();
+            } else if (running < 0) {
+                throw new RuntimeException("invalid running: " + running);
+            }
         }
     }
 

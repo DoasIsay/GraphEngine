@@ -12,13 +12,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @Data
 public class Node {
-    Graph graph;
     boolean async;
     String name;
     AtomicInteger depends;
     List<Node> inNodes;
     List<Node> outNodes;
     Operator operator;
+    Graph graph;
 
     public Node() {
         depends = new AtomicInteger(0);
@@ -33,7 +33,7 @@ public class Node {
             throw new RuntimeException("not found node: " + dependName);
         }
 
-        addInNode(dependNode);
+        this.addInNode(dependNode);
         dependNode.addOutNode(this);
         return dependNode;
     }
@@ -51,6 +51,10 @@ public class Node {
     }
 
     public int decDepends() {
+        if (inNodes.isEmpty()) {
+            return 0;
+        }
+
         return depends.decrementAndGet();
     }
 
@@ -58,12 +62,24 @@ public class Node {
         return depends.get();
     }
 
-    public void resetDepends() {
+    public void reset() {
+        operator.clean();
         if (inNodes == null) {
             depends.set(0);
             return;
         }
         depends.set(inNodes.size());
+    }
+
+    public void check() {
+        if (operator == null) {
+            throw new RuntimeException(getName() + " has no operator");
+        }
+        if (graph == null) {
+            throw new RuntimeException(getName() + " has no graph");
+        }
+
+        operator.check();
     }
 
     @Override

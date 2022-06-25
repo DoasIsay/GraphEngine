@@ -4,56 +4,66 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author xiewenwu
  */
 
-@Getter
-@Setter
 public class Graph {
+    @Setter
     Map<String, Class<? extends Operator>> classMap = Collections.emptyMap();
-    Map<String, Node> nodeMap = new HashMap<>();
+    @Setter
+    List<NodeConfig> nodeConfigs = Collections.emptyList();
 
+    Map<String, Node> nodeMap = new HashMap<>();
+    @Getter
     List<Node> deadNodes = new ArrayList<>();
+    @Getter
     List<Node> sourceNodes = new ArrayList<>();
+    @Getter
     List<Node> processNodes = new ArrayList<>();
+    @Getter
     List<Node> sinkNodes = new ArrayList<>();
 
-    List<NodeConfig> nodeConfigs = Collections.emptyList();
+    @Setter
+    GraphPool graphPool = null;
+    AtomicInteger running = new AtomicInteger(0);
 
     public Graph() {
     }
 
-    public void addNode(Node node) {
-        if (nodeMap == null) {
-            nodeMap = new HashMap<>();
-        }
-        nodeMap.put(node.getName(), node);
+    public Node getNode(String name) {
+        return nodeMap.get(name);
     }
 
-    void transform() {
+    public Graph addNode(Node node) {
+        nodeMap.put(node.getName(), node);
+        return this;
+    }
+
+    Graph transform() {
         nodeConfigs.forEach(nodeConfig -> {
             String name = nodeConfig.getName();
+            Node node = new Node();
+            Operator operator = null;
             try {
-                Node node = new Node();
-                Operator operator = classMap.get(name).newInstance();
-
-                node.setName(name);
-                node.setGraph(this);
-                node.setOperator(operator);
-
-                operator.setNode(node);
-                addNode(node);
-            } catch (InstantiationException e) {
-                e.printStackTrace();
-            } catch (IllegalAccessException e) {
+                operator = classMap.get(name).newInstance();
+            } catch (Exception e) {
                 e.printStackTrace();
             }
+
+            node.setName(name);
+            node.setGraph(this);
+            node.setOperator(operator);
+            operator.setNode(node);
+            addNode(node);
         });
+
+        return this;
     }
 
-    void perf() {
+    Graph analysis() {
         Iterator<Map.Entry<String, Node>> iterator = nodeMap.entrySet().iterator();
         while (iterator.hasNext()) {
             Map.Entry<String, Node> entry = iterator.next();
@@ -66,11 +76,11 @@ public class Graph {
                 continue;
             }
 
+            node.check();
             if (node.getDepends() == 0) {
                 sourceNodes.add(node);
                 continue;
             }
-
             if (consumers == null || consumers.isEmpty()) {
                 sinkNodes.add(node);
                 continue;
@@ -78,53 +88,84 @@ public class Graph {
 
             processNodes.add(node);
         }
+
+        running.set(nodeMap.size());
+        return this;
     }
 
-    void generate() {
+    Graph generate() {
         nodeMap.values().forEach(node -> node.getOperator().register());
+        return this;
     }
 
-    public void build() {
+    public Graph build() {
         transform();
         generate();
-        perf();
+        analysis();
         check();
+
+        return this;
     }
 
-    public void start() {
-        sourceNodes.forEach(Executor::execute);
+    public Graph reset() {
+        running.set(nodeMap.size());
+        nodeMap.values().forEach(Node::reset);
+        return this;
     }
 
-    public static void stop() {
-        Executor.stop();
-    }
-
-    public Node getNode(String name) {
-        return nodeMap.get(name);
-    }
-
-    void check() {
+    Graph check() {
         Set<Node> nodes = new HashSet<>(nodeMap.values());
         removeSourceNode(sourceNodes, nodes);
         if (!nodes.isEmpty()) {
-            throw new RuntimeException("graph has cycle: " + nodes);
+            throw new RuntimeException("graph has cycle, caused by those nodes: " + nodes);
         }
 
-        nodeMap.values().forEach(Node::resetDepends);
+        return this;
+    }
+
+    public void clean() {
+        classMap = null;
+        nodeConfigs = null;
+        nodeMap = null;
+        deadNodes = null;
+        sourceNodes = null;
+        processNodes = null;
+        sinkNodes = null;
+        running = null;
+    }
+
+    public <T> void run(T event) {
+        sourceNodes.forEach(node -> Executor.execute(node, event));
+    }
+
+    public void close() {
+        if (graphPool != null && !isRunning()) {
+            System.out.println("graph run out of node, now close it");
+            graphPool.returnResource(this);
+        }
+    }
+
+    public int decRunning() {
+        return running.decrementAndGet();
+    }
+
+    public boolean isRunning() {
+        return running.get() != 0;
     }
 
     void removeSourceNode(List<Node> sourceNodes, Set<Node> nodes) {
         sourceNodes.forEach(sourceNode -> {
-            if (sourceNode.getDepends() == 0) {
-                nodes.remove(sourceNode);
-                sourceNode.getOutNodes().forEach(Node::decDepends);
-                removeSourceNode(sourceNode.getOutNodes(), nodes);
+            if (sourceNode.getDepends() != 0) {
+                return;
             }
+            nodes.remove(sourceNode);
+            sourceNode.getOutNodes().forEach(Node::decDepends);
+            removeSourceNode(sourceNode.getOutNodes(), nodes);
         });
     }
 
     StringBuilder padding(StringBuilder sb, int size) {
-        for (int i=0; i < size; ++i) {
+        for (int i = 0; i < size; ++i) {
             sb.append(" ");
         }
         return sb;
