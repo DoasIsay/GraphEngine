@@ -76,6 +76,5 @@ public class GraphFactory implements PooledObjectFactory<Graph> {
 
     @Override
     public void passivateObject(PooledObject<Graph> pooledObject) throws Exception {
-
     }
 }

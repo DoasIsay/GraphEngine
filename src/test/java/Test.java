@@ -134,17 +134,36 @@ public class Test {
     }
 
     public static class TestOperator7 extends Operator<String> {
-        String output;
+        @OutPut
+        String outputString;
 
-        @Override
-        public void clean() {
-            output = null;
-        }
+        @OutPut
+        byte outPutByte;
+
+        @OutPut
+        int outPutInt;
+
+        @OutPut
+        float outPutFloat;
+
+        @OutPut
+        Double outPutDouble;
+
+        @OutPut
+        char outPutChar;
+
+        @OutPut
+        Boolean outPutBoolean;
+
+        //@Override
+        //public void clean() {
+        //    output = null;
+        //}
 
         @Override
         public void invoke(String value) {
-            output = value;
-            System.out.println("invoke " + this.getClass().getSimpleName() + " output: " + output);
+            outputString = value;
+            System.out.println("invoke " + this.getClass().getSimpleName() + " output: " + outputString);
         }
 
         @Override
@@ -202,19 +221,20 @@ public class Test {
 
         GraphPool graphPool = new GraphPool(classMap, nodeConfigs);
         Graph graph = graphPool.getResource();
-        graph.setClassMap(classMap);
-        graph.setNodeConfigs(nodeConfigs);
 
         System.out.println("source:  " + graph.getSourceNodes());
         System.out.println("process: " + graph.getProcessNodes());
         System.out.println("sink:    " + graph.getSinkNodes());
-
         System.out.println(graph.toString());
-        graph.run("test");
 
-        System.out.println(graphPool.toString());
-        Thread.sleep(10000);
-        graphPool.returnResource(graph);
+        graph.run("test");
+        graphPool.getResource().run("test1");
+        graphPool.getResource().run("test2");
+        graphPool.getResource().run("test3");
+
+        Integer a = new Integer(1);
+        Thread.sleep(1000);
+        System.out.println(a.getClass().isAssignableFrom(int.class));
         Executor.stop();
     }
 }

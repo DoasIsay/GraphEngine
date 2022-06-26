@@ -28,6 +28,7 @@ public class Graph {
 
     @Setter
     GraphPool graphPool = null;
+    @Getter
     AtomicInteger running = new AtomicInteger(0);
 
     public Graph() {
@@ -103,7 +104,6 @@ public class Graph {
         generate();
         analysis();
         check();
-
         return this;
     }
 
@@ -120,6 +120,7 @@ public class Graph {
             throw new RuntimeException("graph has cycle, caused by those nodes: " + nodes);
         }
 
+        reset();
         return this;
     }
 
@@ -134,12 +135,12 @@ public class Graph {
         running = null;
     }
 
-    public <T> void run(T event) {
-        sourceNodes.forEach(node -> Executor.execute(node, event));
+    public <T> void run(T value) {
+        sourceNodes.forEach(node -> Executor.execute(node, value));
     }
 
     public void close() {
-        if (graphPool != null && !isRunning()) {
+        if (decRunning() == 0 && graphPool != null) {
             System.out.println("graph run out of node, now close it");
             graphPool.returnResource(this);
         }

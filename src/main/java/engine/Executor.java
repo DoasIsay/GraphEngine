@@ -19,20 +19,18 @@ public class Executor {
 
     static <T> void notify(List<Node> nodes, T value) {
         nodes.forEach(node -> {
-            int depends = node.decDepends();
-            if (depends == 0) {
-                System.out.println("notify " + node.getName());
-                Executor.execute(node, value);
-                notify(node.getOutNodes(), value);
-            } else if (depends < 0) {
-                System.out.println(node.getName() + " depends " + depends);
-                //throw new RuntimeException(node.getName() + " invalid depends: " + depends);
+            if (node.decDepends() != 0) {
+                return;
             }
+
+            System.out.println("notify " + node.getName());
+            Executor.execute(node, value);
+            notify(node.getOutNodes(), value);
         });
     }
 
     public static <T> void execute(Node node, T value) {
-        if (node.isAsync()) {
+        if (node.isAsync() && node.getOutNodes().size() > 1) {
             threadPoolExecutor.submit(() -> invoke(node, value));
         } else {
             invoke(node, value);
@@ -47,13 +45,7 @@ public class Executor {
             e.printStackTrace();
         } finally {
             notify(node.getOutNodes(), value);
-            Graph graph = node.getGraph();
-            int running = graph.decRunning();
-            if (running ==  0) {
-                graph.close();
-            } else if (running < 0) {
-                throw new RuntimeException("invalid running: " + running);
-            }
+            node.getGraph().close();
         }
     }
 
