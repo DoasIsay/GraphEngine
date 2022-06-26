@@ -34,10 +34,10 @@ public abstract class Operator<T> {
         }
     }
 
-    List<Field> fields;
+    List<Reflect.AnnField> fields;
     public void clean() {
         if (fields == null) {
-            fields = Reflect.getAnnotationField(this, OutPut.class);
+            fields = Reflect.getAnnField(this, OutPut.class);
         }
 
         Reflect.clean(this, fields);

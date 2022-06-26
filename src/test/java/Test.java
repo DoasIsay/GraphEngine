@@ -1,4 +1,5 @@
 import engine.*;
+import lombok.Getter;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -50,6 +51,7 @@ public class Test {
     }
 
     public static class TestOperator3 extends Operator<String> {
+        @Getter
         String output;
 
         @Override
@@ -137,7 +139,7 @@ public class Test {
     }
 
     public static class TestOperator7 extends Operator<String> {
-        @OutPut
+        @OutPut(value = "testOutPutString")
         String outputString;
 
         @OutPut
@@ -160,8 +162,8 @@ public class Test {
 
         @Override
         public void invoke(String value) {
-            outputString = value;
             System.out.println("invoke " + this.getClass().getSimpleName() + " output: " + outputString);
+            outputString = testOperator3.getOutput();
         }
 
         @Depend(name = "TestOperator3")
@@ -222,10 +224,10 @@ public class Test {
         System.out.println("sink:    " + graph.getSinkNodes());
         System.out.println(graph.toString());
 
-        graph.run("test");
-        graphPool.getResource().run("test1");
-        graphPool.getResource().run("test2");
-        graphPool.getResource().run("test3");
+        graph.run("value1");
+        graphPool.getResource().run("value2");
+        graphPool.getResource().run("value3");
+        graphPool.getResource().run("value4");
 
         Thread.sleep(1000);
 

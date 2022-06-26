@@ -39,6 +39,7 @@ public class Graph {
     }
 
     public Graph addNode(Node node) {
+        node.check();
         nodeMap.put(node.getName(), node);
         return this;
     }
@@ -52,6 +53,7 @@ public class Graph {
                 operator = classMap.get(name).newInstance();
             } catch (Exception e) {
                 e.printStackTrace();
+                return;
             }
 
             node.setName(name);
@@ -76,8 +78,6 @@ public class Graph {
                 deadNodes.add(node);
                 continue;
             }
-
-            node.check();
             if (node.getDepends() == 0) {
                 sourceNodes.add(node);
                 continue;

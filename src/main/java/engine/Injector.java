@@ -1,6 +1,7 @@
 package engine;
 
 import java.lang.reflect.Field;
+import java.util.List;
 
 /**
  * @author xiewenwu
@@ -8,23 +9,18 @@ import java.lang.reflect.Field;
 
 public class Injector {
     public static void inject(Operator operator) {
-        Field[] fields = operator.getClass().getDeclaredFields();
+        List<Reflect.AnnField> annFields = Reflect.getAnnField(operator, Depend.class);
+        for (Reflect.AnnField annField: annFields) {
+            Field field = annField.getField();
+            Depend depend = annField.getAnn();
+            String dependName = depend.name();
 
-        for (Field field: fields) {
-            Depend[] depend = field.getDeclaredAnnotationsByType(Depend.class);
-            if (depend == null || depend.length == 0) {
-                continue;
-            }
-
-            field.setAccessible(true);
             try {
                 Operator dependOperator = (Operator) field.get(operator);
                 if (dependOperator != null) {
                     return;
                 }
-
-                String dependName = depend[0].name();
-                dependOperator  = operator.dependOn(dependName);
+                dependOperator = operator.dependOn(dependName);
                 field.set(operator, dependOperator);
             } catch (IllegalAccessException e) {
                 e.printStackTrace();
