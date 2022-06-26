@@ -1,19 +1,17 @@
 package engine;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author xiewenwu
  */
-
-public class Cleaner {
-    static void setFieldValue(Object obj, Field field) {
+public class Reflect {
+    public static void setDefFieldValue(Object obj, Field field) {
         field.setAccessible(true);
         Class type = field.getType();
+
         try {
             if (type.isAssignableFrom(char.class) || type.isAssignableFrom(Character.class)) {
                 field.set(obj, '0');
@@ -37,30 +35,39 @@ public class Cleaner {
                 field.set(obj, Collections.emptyMap());
             } else if (type.isAssignableFrom(Set.class)) {
                 field.set(obj, Collections.emptySet());
-            }  else if (type.isAssignableFrom(List.class)) {
+            } else if (type.isAssignableFrom(List.class)) {
                 field.set(obj, Collections.emptyList());
             } else {
-                field.set(obj,type.newInstance());
+                field.set(obj, type.newInstance());
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    public static void clean(Object obj, Field[] fields) {
-        if (fields == null) {
-            fields = obj.getClass().getDeclaredFields();
+    public static void clean(Object obj, List<Field> fields) {
+        if (fields == null || fields.isEmpty()) {
+            return;
         }
 
+        fields.forEach(field -> setDefFieldValue(obj, field));
+    }
+
+    public static List<Field> getAnnotationField(Object obj, Class annClass) {
+        Field[] fields = Optional.ofNullable(obj)
+                .map(tmp -> tmp.getClass().getDeclaredFields())
+                .get();
+
+        List<Field> annFields = new ArrayList<>();
         for (Field field: fields) {
-            OutPut[] outPut = field.getDeclaredAnnotationsByType(OutPut.class);
-            if (outPut == null || outPut.length == 0) {
+            Annotation[] annotation = field.getDeclaredAnnotationsByType(annClass);
+            if (annotation == null || annotation.length == 0) {
                 continue;
             }
 
-            System.out.println(field.getName());
-            setFieldValue(obj, field);
+            annFields.add(field);
         }
-    }
 
+        return annFields;
+    }
 }

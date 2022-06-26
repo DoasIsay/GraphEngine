@@ -95,7 +95,11 @@ public class Graph {
     }
 
     Graph generate() {
-        nodeMap.values().forEach(node -> node.getOperator().register());
+        nodeMap.values().forEach(node -> {
+            Operator operator = node.getOperator();
+            operator.register();
+            Injector.inject(operator);
+        });
         return this;
     }
 

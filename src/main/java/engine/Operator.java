@@ -3,6 +3,7 @@ package engine;
 import lombok.Data;
 
 import java.lang.reflect.Field;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -15,7 +16,7 @@ public abstract class Operator<T> {
 
     public abstract void invoke(T value);
 
-    public abstract void register();
+    public void register() {}
 
     public <O extends Operator> O dependOn(String dependName) {
         return (O) Optional.ofNullable(node.dependOn(dependName))
@@ -33,12 +34,12 @@ public abstract class Operator<T> {
         }
     }
 
-    Field[] fields;
+    List<Field> fields;
     public void clean() {
         if (fields == null) {
-            fields = this.getClass().getDeclaredFields();
+            fields = Reflect.getAnnotationField(this, OutPut.class);
         }
 
-        Cleaner.clean(this, fields);
+        Reflect.clean(this, fields);
     }
 }

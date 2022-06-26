@@ -102,13 +102,14 @@ public class Test {
         @Override
         public void invoke(String value) {
             output = value;
-            System.out.println("invoke " + this.getClass().getSimpleName() + " output: " + output);
+            System.out.println("invoke " + this.getClass().getSimpleName() + " output: " + testOperator7.outputString);
         }
 
+        TestOperator7 testOperator7;
         @Override
         public void register() {
             dependOn("TestOperator1");
-            dependOn("TestOperator7");
+            testOperator7 = dependOn("TestOperator7");
         }
     }
 
@@ -126,10 +127,12 @@ public class Test {
             System.out.println("invoke " + this.getClass().getSimpleName() + " output: " + output);
         }
 
+        @Depend(name = "TestOperator4")
+        TestOperator4 testOperator4;
+
         @Override
         public void register() {
             dependOn("TestOperator3");
-            dependOn("TestOperator4");
         }
     }
 
@@ -155,22 +158,14 @@ public class Test {
         @OutPut
         Boolean outPutBoolean;
 
-        //@Override
-        //public void clean() {
-        //    output = null;
-        //}
-
         @Override
         public void invoke(String value) {
             outputString = value;
             System.out.println("invoke " + this.getClass().getSimpleName() + " output: " + outputString);
         }
 
-        @Override
-        public void register() {
-            dependOn("TestOperator3");
-            //dependOn("TestOperator2");
-        }
+        @Depend(name = "TestOperator3")
+        TestOperator3 testOperator3;
     }
 
     public static void main(String[] args) throws Exception {
@@ -232,9 +227,8 @@ public class Test {
         graphPool.getResource().run("test2");
         graphPool.getResource().run("test3");
 
-        Integer a = new Integer(1);
         Thread.sleep(1000);
-        System.out.println(a.getClass().isAssignableFrom(int.class));
+
         Executor.stop();
     }
 }
