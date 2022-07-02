@@ -2,14 +2,12 @@ package engine;
 
 import lombok.Data;
 
-import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Optional;
 
 /**
  * @author xiewenwu
  */
-
 @Data
 public abstract class Operator<T> {
     Node node;
@@ -18,8 +16,8 @@ public abstract class Operator<T> {
 
     public void register() {}
 
-    public <O extends Operator> O dependOn(String dependName) {
-        return (O) Optional.ofNullable(node.dependOn(dependName))
+    public <O extends Operator> O depend(String dependName) {
+        return (O) Optional.ofNullable(node.depend(dependName))
                 .map(node -> node.getOperator())
                 .orElse(null);
     }
@@ -34,10 +32,10 @@ public abstract class Operator<T> {
         }
     }
 
-    List<Reflect.AnnField> fields;
+    List<Reflect.AnnotationField> fields;
     public void clean() {
         if (fields == null) {
-            fields = Reflect.getAnnField(this, OutPut.class);
+            fields = Reflect.getAnnotationField(this, Output.class);
         }
 
         Reflect.clean(this, fields);

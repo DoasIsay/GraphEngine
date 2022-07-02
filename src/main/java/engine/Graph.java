@@ -9,10 +9,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * @author xiewenwu
  */
-
 public class Graph {
-    @Setter
-    Map<String, Class<? extends Operator>> classMap = Collections.emptyMap();
     @Setter
     List<NodeConfig> nodeConfigs = Collections.emptyList();
 
@@ -46,20 +43,15 @@ public class Graph {
 
     Graph transform() {
         nodeConfigs.forEach(nodeConfig -> {
-            String name = nodeConfig.getName();
+            String operatorName = nodeConfig.getOperator();
+            Operator operator = OperatorFactory.get(operatorName);
             Node node = new Node();
-            Operator operator = null;
-            try {
-                operator = classMap.get(name).newInstance();
-            } catch (Exception e) {
-                e.printStackTrace();
-                return;
-            }
-
-            node.setName(name);
+            node.setName(nodeConfig.getName());
             node.setGraph(this);
             node.setOperator(operator);
-            operator.setNode(node);
+            if (operator != null) {
+                operator.setNode(node);
+            }
             addNode(node);
         });
 
@@ -97,6 +89,9 @@ public class Graph {
     Graph generate() {
         nodeMap.values().forEach(node -> {
             Operator operator = node.getOperator();
+            if (operator == null) {
+                return;
+            }
             operator.register();
             Injector.inject(operator);
         });
@@ -129,7 +124,6 @@ public class Graph {
     }
 
     public void clean() {
-        classMap = null;
         nodeConfigs = null;
         nodeMap = null;
         deadNodes = null;

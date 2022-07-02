@@ -6,26 +6,21 @@ import org.apache.commons.pool2.PooledObjectFactory;
 import org.apache.commons.pool2.impl.DefaultPooledObject;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author xiewenwu
  */
 public class GraphFactory implements PooledObjectFactory<Graph> {
     @Setter
-    Map<String, Class<? extends Operator>> classMap;
-    @Setter
     List<NodeConfig> nodeConfigs;
 
-    public GraphFactory(Map<String, Class<? extends Operator>> classMap, List<NodeConfig> nodeConfigs) {
-        this.classMap = classMap;
+    public GraphFactory(List<NodeConfig> nodeConfigs) {
         this.nodeConfigs = nodeConfigs;
     }
 
     @Override
     public PooledObject<Graph> makeObject() throws Exception {
         Graph graph = new Graph();
-        graph.setClassMap(classMap);
         graph.setNodeConfigs(nodeConfigs);
         graph.build();
 

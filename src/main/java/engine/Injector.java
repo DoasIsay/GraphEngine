@@ -6,13 +6,12 @@ import java.util.List;
 /**
  * @author xiewenwu
  */
-
 public class Injector {
     public static void inject(Operator operator) {
-        List<Reflect.AnnField> annFields = Reflect.getAnnField(operator, Depend.class);
-        for (Reflect.AnnField annField: annFields) {
-            Field field = annField.getField();
-            Depend depend = annField.getAnn();
+        List<Reflect.AnnotationField> annotationFields = Reflect.getAnnotationField(operator, Depend.class);
+        for (Reflect.AnnotationField annotationField : annotationFields) {
+            Field field = annotationField.getField();
+            Depend depend = annotationField.getAnnotation();
             String dependName = depend.name();
 
             try {
@@ -20,7 +19,7 @@ public class Injector {
                 if (dependOperator != null) {
                     return;
                 }
-                dependOperator = operator.dependOn(dependName);
+                dependOperator = operator.depend(dependName);
                 field.set(operator, dependOperator);
             } catch (IllegalAccessException e) {
                 e.printStackTrace();

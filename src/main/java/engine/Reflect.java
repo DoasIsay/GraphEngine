@@ -2,9 +2,11 @@ package engine;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import org.reflections.Reflections;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -12,9 +14,113 @@ import java.util.stream.Collectors;
  * @author xiewenwu
  */
 public class Reflect {
-    public static void setDefFieldValue(Object obj, AnnField annField) {
-        Field field = annField.getField();
-        OutPut outPut = annField.getAnn();
+    public static void clean(Object obj, List<AnnotationField> annotationFields) {
+        if (annotationFields == null || annotationFields.isEmpty()) {
+            return;
+        }
+
+        annotationFields.forEach(field -> setDefFieldValue(obj, field));
+    }
+
+    @Data
+    @AllArgsConstructor
+    public static class AnnotationField {
+        Annotation annotation;
+        Field field;
+        public <T extends Annotation> T getAnnotation() {
+            return (T) annotation;
+        }
+    }
+
+    public static List<AnnotationField> getAnnotationField(Object obj, Class annClass) {
+        Field[] fields = Optional.ofNullable(obj)
+                .map(tmp -> tmp.getClass().getDeclaredFields())
+                .get();
+
+        List<AnnotationField> annotationFields = new ArrayList<>();
+        for (Field field : fields) {
+            Annotation[] annotation = field.getDeclaredAnnotationsByType(annClass);
+            if (annotation == null || annotation.length == 0) {
+                continue;
+            }
+
+            field.setAccessible(true);
+            annotationFields.add(new AnnotationField(annotation[0], field));
+        }
+
+        return annotationFields;
+    }
+
+    public static List<Field> getField(Object obj, Class annClass) {
+        return getAnnotationField(obj, annClass)
+                .stream()
+                .map(AnnotationField::getField)
+                .collect(Collectors.toList());
+    }
+
+    public static <T> T getAnnotationValue(Class target, Class ann, String field) {
+        try {
+            Annotation annotation = target.getDeclaredAnnotation(ann);
+            if (annotation == null) {
+                return null;
+            }
+            Method method = ann.getMethod(field);
+            return (T) method.invoke(annotation);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    public static String getAnnotationName(Class target, Class ann) {
+        String name = getAnnotationValue(target, ann, "name");
+        if (name != null && name.isEmpty()) {
+            return target.getSimpleName();
+        }
+
+        return name;
+    }
+
+    public static String getAnnotationType(Class target, Class ann) {
+        return getAnnotationValue(target, ann, "type");
+    }
+
+    static Map<Class, Map<String, Map<String, Class<?>>>> annTypeName2ClassMap = new HashMap<>();
+
+    public static Map<String, Map<String, Class<?>>> getAnnotationClass(String path, Class ann) {
+        Map<String, Map<String, Class<?>>> typeName2ClassMap = annTypeName2ClassMap.get(ann);
+        if (typeName2ClassMap != null) {
+            return typeName2ClassMap;
+        }
+
+        Reflections reflections = new Reflections(path);
+        Set<Class<?>> classSet = reflections.getTypesAnnotatedWith(ann);
+
+        typeName2ClassMap = new HashMap<>();
+        for (Class classType: classSet) {
+            String name = getAnnotationName(classType, ann);
+            if (name == null) {
+                continue;
+            }
+
+            String type = getAnnotationType(classType, ann);
+            System.out.println(path + " get annotation: " + name + "\tclassType: " + classType.getName());
+
+            Map<String, Class<?>> name2ClassMap = typeName2ClassMap.computeIfAbsent(type, k -> new HashMap<>());
+            Class tmp = name2ClassMap.get(name);
+            if (tmp != null) {
+                System.out.println("class name: " + name + " has tow classType old class: " + classType.getName() + " new class: "+ tmp.getName() + " please check");
+            }
+            name2ClassMap.put(name, classType);
+        }
+
+        return typeName2ClassMap;
+    }
+
+    public static void setDefFieldValue(Object obj, AnnotationField annotationField) {
+        Field field = annotationField.getField();
+        Output outPut = annotationField.getAnnotation();
         String value = outPut.value();
         Class type = field.getType();
 
@@ -28,32 +134,31 @@ public class Reflect {
                 }
             } else if (type.isAssignableFrom(short.class) || type.isAssignableFrom(Short.class)) {
                 if (hasValue) {
-                    field.set(obj, Short.valueOf(value).shortValue());
+                    field.set(obj, Short.valueOf(value));
                 } else {
                     field.set(obj, (short) 0);
                 }
             } else if (type.isAssignableFrom(int.class) || type.isAssignableFrom(Integer.class)) {
                 if (hasValue) {
-                    field.set(obj, Integer.valueOf(value).intValue());
+                    field.set(obj, Integer.valueOf(value));
                 } else {
                     field.set(obj, (int) 0);
                 }
             } else if (type.isAssignableFrom(long.class) || type.isAssignableFrom(Long.class)) {
                 if (hasValue) {
-                    field.set(obj, Long.valueOf(value).longValue());
+                    field.set(obj, Long.valueOf(value));
                 } else {
                     field.set(obj, (long) 0);
                 }
             } else if (type.isAssignableFrom(byte.class) || type.isAssignableFrom(Byte.class)) {
                 if (hasValue) {
-                    field.set(obj, Byte.valueOf(value).byteValue());
+                    field.set(obj, Byte.valueOf(value));
                 } else {
                     field.set(obj, (byte) 0);
                 }
-
             } else if (type.isAssignableFrom(boolean.class) || type.isAssignableFrom(Boolean.class)) {
                 if (hasValue) {
-                    field.set(obj, Boolean.valueOf(value).booleanValue());
+                    field.set(obj, Boolean.valueOf(value));
                 } else {
                     field.set(obj, false);
                 }
@@ -65,7 +170,7 @@ public class Reflect {
                 }
             } else if (type.isAssignableFrom(double.class) || type.isAssignableFrom(Double.class)) {
                 if (hasValue) {
-                    field.set(obj, Double.valueOf(value).doubleValue());
+                    field.set(obj, Double.valueOf(value));
                 } else {
                     field.set(obj, (double) 0);
                 }
@@ -84,49 +189,4 @@ public class Reflect {
             e.printStackTrace();
         }
     }
-
-    public static void clean(Object obj, List<AnnField> annFields) {
-        if (annFields == null || annFields.isEmpty()) {
-            return;
-        }
-
-        annFields.forEach(field -> setDefFieldValue(obj, field));
-    }
-
-    @Data
-    @AllArgsConstructor
-    public static class AnnField {
-        Object ann;
-        Field field;
-        public <T extends Annotation> T getAnn() {
-            return (T) ann;
-        }
-    }
-
-    public static List<AnnField> getAnnField(Object obj, Class annClass) {
-        Field[] fields = Optional.ofNullable(obj)
-                .map(tmp -> tmp.getClass().getDeclaredFields())
-                .get();
-
-        List<AnnField> annFields = new ArrayList<>();
-        for (Field field : fields) {
-            Annotation[] annotation = field.getDeclaredAnnotationsByType(annClass);
-            if (annotation == null || annotation.length == 0) {
-                continue;
-            }
-
-            field.setAccessible(true);
-            annFields.add(new AnnField(annotation[0], field));
-        }
-
-        return annFields;
-    }
-
-    public static List<Field> getField(Object obj, Class annClass) {
-        return getAnnField(obj, annClass)
-                .stream()
-                .map(AnnField::getField)
-                .collect(Collectors.toList());
-    }
 }
-

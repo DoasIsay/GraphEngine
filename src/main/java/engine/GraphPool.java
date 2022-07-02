@@ -4,7 +4,6 @@ import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author xiewenwu
@@ -12,7 +11,7 @@ import java.util.Map;
 public class GraphPool {
     GenericObjectPool pool;
 
-    public GraphPool(Map<String, Class<? extends Operator>> classMap, List<NodeConfig> nodeConfigs) {
+    public GraphPool(List<NodeConfig> nodeConfigs) {
         GenericObjectPoolConfig genericObjectPoolConfig = new GenericObjectPoolConfig();
         genericObjectPoolConfig.setMinIdle(1);
         genericObjectPoolConfig.setMaxIdle(6);
@@ -21,7 +20,7 @@ public class GraphPool {
         genericObjectPoolConfig.setBlockWhenExhausted(true);
         genericObjectPoolConfig.setTestOnBorrow(false);
         genericObjectPoolConfig.setTestOnCreate(false);
-        pool = new GenericObjectPool(new GraphFactory(classMap, nodeConfigs), genericObjectPoolConfig);
+        pool = new GenericObjectPool(new GraphFactory(nodeConfigs), genericObjectPoolConfig);
     }
 
     public Graph getResource() throws Exception {

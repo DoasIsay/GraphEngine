@@ -1,6 +1,5 @@
 package engine;
 
-import java.util.List;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -8,7 +7,6 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author xiewenwu
  */
-
 public class Executor {
     static ThreadPoolExecutor threadPoolExecutor= new ThreadPoolExecutor(
             1,
@@ -17,15 +15,14 @@ public class Executor {
             TimeUnit.MINUTES,
             new SynchronousQueue<>());
 
-    static <T> void notify(List<Node> nodes, T value) {
-        nodes.forEach(node -> {
+    static <T> void notify(Node father, T value) {
+        father.getOutNodes().forEach(node -> {
+            System.out.println(father.getName() + " notify: " + node.getName() + ", depend: " + (node.getDepends() - 1));
             if (node.decDepends() != 0) {
                 return;
             }
 
-            System.out.println("notify " + node.getName());
             Executor.execute(node, value);
-            notify(node.getOutNodes(), value);
         });
     }
 
@@ -44,7 +41,7 @@ public class Executor {
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            notify(node.getOutNodes(), value);
+            notify(node, value);
             node.getGraph().close();
         }
     }

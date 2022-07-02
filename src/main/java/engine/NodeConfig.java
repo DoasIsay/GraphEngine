@@ -7,7 +7,6 @@ import java.util.Map;
 /**
  * @author xiewenwu
  */
-
 @Data
 public class NodeConfig {
     boolean async;

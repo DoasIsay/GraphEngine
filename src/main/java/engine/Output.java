@@ -8,9 +8,8 @@ import java.lang.annotation.Target;
 /**
  * @author xiewenwu
  */
-
 @Target({ElementType.FIELD})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface OutPut {
+public @interface Output {
     String value() default "";
 }

@@ -9,7 +9,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * @author xiewenwu
  */
-
 @Data
 public class Node {
     boolean async;
@@ -26,7 +25,7 @@ public class Node {
         outNodes = new ArrayList<>();
     }
 
-    public Node dependOn(String dependName) {
+    public Node depend(String dependName) {
         this.incDepends();
         Node dependNode = graph.getNode(dependName);
         if (dependNode == null) {
