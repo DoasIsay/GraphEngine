@@ -2,6 +2,7 @@ import com.google.gson.Gson;
 import engine.*;
 import lombok.Data;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.io.FileReader;
 import java.util.List;
@@ -75,6 +76,9 @@ public class Test {
 
     @Load(type = "operator")
     public static class TestOperator4 extends Operator<String> {
+        @Setter
+        @Getter
+        @Output
         String output;
 
         @Override
@@ -84,7 +88,7 @@ public class Test {
 
         @Override
         public void invoke(String value) {
-            output = value;
+            emit("output", value, value);
             System.out.println("invoke " + this.getClass().getSimpleName() + " output: " + output);
         }
 
@@ -135,8 +139,9 @@ public class Test {
             System.out.println("invoke " + this.getClass().getSimpleName() + " output: " + output);
         }
 
-        @Depend(name = "TestOperator4")
+        @Depend(name = "TestOperator4.output")
         TestOperator4 testOperator4;
+
 
         @Override
         public void register() {
@@ -196,6 +201,7 @@ public class Test {
     @Data
     static class Config {
         List<NodeConfig> nodes;
+        public void test() {};
     }
 
     public static void main(String[] args) throws Exception {

@@ -15,13 +15,23 @@ public class Executor {
             TimeUnit.MINUTES,
             new SynchronousQueue<>());
 
-    static <T> void notify(Node father, T value) {
+    public static <T> void notify(Node father, T value) {
         father.getOutNodes().forEach(node -> {
-            System.out.println(father.getName() + " notify: " + node.getName() + ", depend: " + (node.getDepends() - 1));
+            System.out.println(father.getName() + " notify: " + node.getName() + ", depend: " + (node.getNodeDepends() - 1));
             if (node.decDepends() != 0) {
                 return;
             }
 
+            Executor.execute(node, value);
+        });
+    }
+
+    public static <T> void notify(Node father, String fieldName, T value) {
+        father.getFieldOutNodes(fieldName).forEach(node -> {
+            System.out.println(father.getName() + " field: " + fieldName + " notify: " + node.getName() + ", depend: " + (node.getNodeDepends() - 1));
+            if (node.decDepends() != 0) {
+                return;
+            }
             Executor.execute(node, value);
         });
     }

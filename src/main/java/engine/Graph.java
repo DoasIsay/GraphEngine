@@ -65,12 +65,12 @@ public class Graph {
             Node node = entry.getValue();
             List<Node> consumers = node.getOutNodes();
 
-            if (node.getDepends() == 0 && (consumers == null || consumers.isEmpty())) {
+            if (node.getNodeDepends() == 0 && (consumers == null || consumers.isEmpty())) {
                 iterator.remove();
                 deadNodes.add(node);
                 continue;
             }
-            if (node.getDepends() == 0) {
+            if (node.getNodeDepends() == 0) {
                 sourceNodes.add(node);
                 continue;
             }
@@ -154,11 +154,11 @@ public class Graph {
 
     void removeSourceNode(List<Node> sourceNodes, Set<Node> nodes) {
         sourceNodes.forEach(sourceNode -> {
-            if (sourceNode.getDepends() != 0) {
+            if (sourceNode.getNodeDepends() != 0 || sourceNode.getFieldDepends() != 0) {
                 return;
             }
             nodes.remove(sourceNode);
-            sourceNode.getOutNodes().forEach(Node::decDepends);
+            sourceNode.getOutNodes().forEach(node -> {node.decNodeDepends();node.decFieldDepends();});
             removeSourceNode(sourceNode.getOutNodes(), nodes);
         });
     }

@@ -1,6 +1,5 @@
 package engine;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.reflections.Reflections;
 
@@ -14,6 +13,14 @@ import java.util.stream.Collectors;
  * @author xiewenwu
  */
 public class Reflect {
+    public static void setFieldValue(Object obj, Field field, Object value) {
+        try {
+            field.set(obj, value);
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
+    }
+
     public static void clean(Object obj, List<AnnotationField> annotationFields) {
         if (annotationFields == null || annotationFields.isEmpty()) {
             return;
@@ -22,11 +29,31 @@ public class Reflect {
         annotationFields.forEach(field -> setDefFieldValue(obj, field));
     }
 
+    public static String getFieldSetName(Field field) {
+        String fieldName = field.getName();
+        return "set" + String.valueOf(fieldName.charAt(0)).toUpperCase() + fieldName.substring(1);
+    }
+
+    public static String getFieldGetName(Field field) {
+        String fieldName = field.getName();
+        return field.getType().isAssignableFrom(boolean.class) || field.getType().isAssignableFrom(Boolean.class)
+                ? "is": "get"
+                + String.valueOf(fieldName.charAt(0)).toUpperCase() + fieldName.substring(1);
+    }
+
     @Data
-    @AllArgsConstructor
     public static class AnnotationField {
-        Annotation annotation;
         Field field;
+        String setName;
+        String getName;
+        Annotation annotation;
+
+        public AnnotationField(Annotation annotation, Field field) {
+            this.field = field;
+            this.setName = getFieldSetName(field);
+            this.getName = getFieldGetName(field);
+            this.annotation = annotation;
+        }
         public <T extends Annotation> T getAnnotation() {
             return (T) annotation;
         }
