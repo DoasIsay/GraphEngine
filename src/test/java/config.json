@@ -1,0 +1,36 @@
+{
+  "nodes":[
+    {
+      "name": "TestOperator1",
+      "operator": "TestOperator1"
+    },
+    {
+      "name": "TestOperator2",
+      "operator": "TestOperator2"
+    },
+    {
+      "name": "TestOperator3",
+      "operator": "TestOperator3"
+    },
+    {
+      "name": "TestOperator4",
+      "operator": "TestOperator4"
+    },
+    {
+      "name": "TestOperator5",
+      "operator": "TestOperator5"
+    },
+    {
+      "name": "TestOperator6",
+      "operator": "TestOperator6"
+    },
+    {
+      "name": "TestOperator7",
+      "operator": "TestOperator7"
+    },
+    {
+      "name": "TestOperator8",
+      "operator": "TestOperator8"
+    }
+  ]
+}
