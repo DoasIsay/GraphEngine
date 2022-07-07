@@ -1,5 +1,7 @@
 package engine;
 
+import io.netty.util.Timeout;
+
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -36,11 +38,13 @@ public class Executor {
 
     static <T> void invoke(Node node, T value) {
         Operator operator = node.getOperator();
+        Timeout timeout = Timer.timeout(node.getTimeout(), TimeUnit.MILLISECONDS);
         try {
             operator.invoke(value);
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
+            timeout.cancel();
             notify(node, value);
             node.getGraph().close();
         }

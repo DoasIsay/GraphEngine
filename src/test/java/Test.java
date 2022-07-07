@@ -109,6 +109,11 @@ public class Test {
         @Override
         public void invoke(String value) {
             output = value;
+            try {
+                Thread.sleep(10000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
             System.out.println("invoke " + this.getClass().getSimpleName() + " output: " + testOperator7.outputString);
         }
 
@@ -218,5 +223,6 @@ public class Test {
         Thread.sleep(1000);
 
         Executor.stop();
+        Timer.stop();
     }
 }

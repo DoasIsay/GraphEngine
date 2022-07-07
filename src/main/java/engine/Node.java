@@ -13,6 +13,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class Node {
     boolean async;
     String name;
+    int timeout = 10;
     AtomicInteger depends;
     List<Node> inNodes;
     List<Node> outNodes;
