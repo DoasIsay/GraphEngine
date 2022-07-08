@@ -1,49 +1,63 @@
 package engine;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author xiewenwu
  */
-@Data
+@Setter
+@Getter
 public class Node {
     boolean async;
     String name;
     int timeout = 10;
+    NodeConfig config;
+
     AtomicInteger depends;
-    List<Node> inNodes;
-    List<Node> outNodes;
+    Map<String, Node> inNodes;
+    Map<String, Node> outNodes;
+
     Operator operator;
+
     Graph graph;
 
     public Node() {
         depends = new AtomicInteger(0);
-        inNodes = new ArrayList<>();
-        outNodes = new ArrayList<>();
+        inNodes = new HashMap<>();
+        outNodes = new HashMap<>();
     }
 
-    public Node depend(String dependName) {
-        this.incDepends();
-        Node dependNode = graph.getNode(dependName);
-        if (dependNode == null) {
-            throw new RuntimeException("not found node: " + dependName);
-        }
-
+    public Node depend(Node dependNode) {
         this.addInNode(dependNode);
         dependNode.addOutNode(this);
         return dependNode;
     }
 
     void addInNode(Node node) {
-        inNodes.add(node);
+        if (!inNodes.containsKey(node.getName())) {
+            this.incDepends();
+            inNodes.put(node.getName(), node);
+        }
+    }
+
+    public Collection<Node> getInNodes() {
+        return inNodes.values();
     }
 
     void addOutNode(Node node) {
-        outNodes.add(node);
+        if (!outNodes.containsKey(node.getName())) {
+            outNodes.put(node.getName(), node);
+        }
+    }
+
+    public Collection<Node> getOutNodes() {
+        return outNodes.values();
     }
 
     void incDepends() {
@@ -75,11 +89,17 @@ public class Node {
         if (operator == null) {
             throw new RuntimeException(getName() + " has no operator");
         }
-        if (graph == null) {
-            throw new RuntimeException(getName() + " has no graph");
-        }
 
         operator.check();
+    }
+
+    public <T> T getOperator(String name) {
+        Node node = inNodes.get(name);
+        if (node != null) {
+            return (T) node.getOperator();
+        }
+
+        throw new RuntimeException("not found node: " + name);
     }
 
     @Override

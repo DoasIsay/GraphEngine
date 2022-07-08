@@ -31,18 +31,19 @@ graph:
 
 test code:
 
+    import com.google.gson.Gson;
     import engine.*;
+    import lombok.Data;
     import lombok.Getter;
     
-    import java.util.ArrayList;
-    import java.util.HashMap;
+    import java.io.FileReader;
     import java.util.List;
-    import java.util.Map;
     
     /**
      * @author xiewenwu
      */
     public class Test {
+        @Load(type = "operator")
         public static class TestOperator1 extends Operator<String> {
             String output;
     
@@ -56,12 +57,9 @@ test code:
                 output = value;
                 System.out.println("invoke " + this.getClass().getSimpleName() + " output: " + output);
             }
-    
-            @Override
-            public void register() {
-            }
         }
     
+        @Load(type = "operator")
         public static class TestOperator2 extends Operator<String> {
             String output;
     
@@ -76,13 +74,13 @@ test code:
                 System.out.println("invoke " + this.getClass().getSimpleName() + " output: " + output);
             }
     
-            @Override
-            public void register() {
-                dependOn("TestOperator5");
-                dependOn("TestOperator1");
-            }
+            @Depend(name = "TestOperator1")
+            TestOperator1 testOperator1;
+            @Depend(name = "TestOperator5")
+            TestOperator5 testOperator5;
         }
     
+        @Load(type = "operator")
         public static class TestOperator3 extends Operator<String> {
             @Getter
             String output;
@@ -97,12 +95,9 @@ test code:
                 output = value;
                 System.out.println("invoke " + this.getClass().getSimpleName() + " output: " + output);
             }
-    
-            @Override
-            public void register() {
-            }
         }
     
+        @Load(type = "operator")
         public static class TestOperator4 extends Operator<String> {
             String output;
     
@@ -117,15 +112,17 @@ test code:
                 System.out.println("invoke " + this.getClass().getSimpleName() + " output: " + output);
             }
     
-            @Override
-            public void register() {
-                dependOn("TestOperator2");
-                dependOn("TestOperator1");
-                dependOn("TestOperator5");
-                dependOn("TestOperator3");
-            }
+            @Depend(name = "TestOperator1")
+            TestOperator1 testOperator1;
+            @Depend(name = "TestOperator2")
+            TestOperator2 testOperator2;
+            @Depend(name = "TestOperator3")
+            TestOperator3 testOperator3;
+            @Depend(name = "TestOperator5")
+            TestOperator5 testOperator5;
         }
     
+        @Load(type = "operator")
         public static class TestOperator5 extends Operator<String> {
             String output;
     
@@ -137,17 +134,21 @@ test code:
             @Override
             public void invoke(String value) {
                 output = value;
+                try {
+                    Thread.sleep(10000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
                 System.out.println("invoke " + this.getClass().getSimpleName() + " output: " + testOperator7.outputString);
             }
     
+            @Depend(name = "TestOperator1")
+            TestOperator1 testOperator1;
+            @Depend(name = "TestOperator7")
             TestOperator7 testOperator7;
-            @Override
-            public void register() {
-                dependOn("TestOperator1");
-                testOperator7 = dependOn("TestOperator7");
-            }
         }
     
+        @Load(type = "operator")
         public static class TestOperator6 extends Operator<String> {
             String output;
     
@@ -162,35 +163,33 @@ test code:
                 System.out.println("invoke " + this.getClass().getSimpleName() + " output: " + output);
             }
     
+            @Depend(name = "TestOperator3")
+            TestOperator3 testOperator3;
             @Depend(name = "TestOperator4")
             TestOperator4 testOperator4;
-    
-            @Override
-            public void register() {
-                dependOn("TestOperator3");
-            }
         }
     
+        @Load(type = "operator")
         public static class TestOperator7 extends Operator<String> {
-            @OutPut(value = "testOutPutString")
+            @Output(value = "testOutPutString")
             String outputString;
     
-            @OutPut
+            @Output
             byte outPutByte;
     
-            @OutPut
+            @Output(value = "1")
             int outPutInt;
     
-            @OutPut
+            @Output
             float outPutFloat;
     
-            @OutPut
+            @Output(value = "1.23")
             Double outPutDouble;
     
-            @OutPut
+            @Output
             char outPutChar;
     
-            @OutPut
+            @Output
             Boolean outPutBoolean;
     
             @Override
@@ -203,68 +202,47 @@ test code:
             TestOperator3 testOperator3;
         }
     
+        @Load(type = "operator")
+        public static class TestOperator8 extends Operator<String> {
+            String output;
+    
+            @Override
+            public void clean() {
+                output = null;
+            }
+    
+            @Override
+            public void invoke(String value) {
+                output = value;
+                System.out.println("invoke " + this.getClass().getSimpleName() + " output: " + output);
+            }
+        }
+    
+        @Data
+        static class Config {
+            List<NodeConfig> nodes;
+        }
+    
         public static void main(String[] args) throws Exception {
-            Map<String, Class<? extends Operator>> classMap = new HashMap<>();
-            classMap.put("TestOperator1", TestOperator1.class);
-            classMap.put("TestOperator2", TestOperator2.class);
-            classMap.put("TestOperator3", TestOperator3.class);
-            classMap.put("TestOperator4", TestOperator4.class);
-            classMap.put("TestOperator5", TestOperator5.class);
-            classMap.put("TestOperator6", TestOperator6.class);
-            classMap.put("TestOperator7", TestOperator7.class);
-    
-            List<NodeConfig> nodeConfigs = new ArrayList<>();
-            NodeConfig nodeConfig = new NodeConfig();
-            nodeConfig.setName("TestOperator1");
-            nodeConfig.setOperator("TestOperator1");
-            nodeConfigs.add(nodeConfig);
-    
-            nodeConfig = new NodeConfig();
-            nodeConfig.setName("TestOperator2");
-            nodeConfig.setOperator("TestOperator2");
-            nodeConfigs.add(nodeConfig);
-    
-            nodeConfig = new NodeConfig();
-            nodeConfig.setName("TestOperator3");
-            nodeConfig.setOperator("TestOperator3");
-            nodeConfigs.add(nodeConfig);
-    
-            nodeConfig = new NodeConfig();
-            nodeConfig.setName("TestOperator4");
-            nodeConfig.setOperator("TestOperator4");
-            nodeConfigs.add(nodeConfig);
-    
-            nodeConfig = new NodeConfig();
-            nodeConfig.setName("TestOperator5");
-            nodeConfig.setOperator("TestOperator5");
-            nodeConfigs.add(nodeConfig);
-    
-            nodeConfig = new NodeConfig();
-            nodeConfig.setName("TestOperator6");
-            nodeConfig.setOperator("TestOperator6");
-            nodeConfigs.add(nodeConfig);
-    
-            nodeConfig = new NodeConfig();
-            nodeConfig.setName("TestOperator7");
-            nodeConfig.setOperator("TestOperator7");
-            nodeConfigs.add(nodeConfig);
-    
-            GraphPool graphPool = new GraphPool(classMap, nodeConfigs);
+            Config config = new Gson().fromJson(new FileReader("src/test/java/config.json"), Config.class);
+            GraphPool graphPool = new GraphPool(config.getNodes());
             Graph graph = graphPool.getResource();
     
             System.out.println("source:  " + graph.getSourceNodes());
             System.out.println("process: " + graph.getProcessNodes());
             System.out.println("sink:    " + graph.getSinkNodes());
+            System.out.println("dead:    " + graph.getDeadNodes());
+    
             System.out.println(graph.toString());
     
-            graph.run("test");
-            graphPool.getResource().run("test1");
-            graphPool.getResource().run("test2");
-            graphPool.getResource().run("test3");
+            graph.run("value1");
+            graphPool.getResource().run("value2");
+            graphPool.getResource().run("value3");
+            graphPool.getResource().run("value4");
     
             Thread.sleep(1000);
     
             Executor.stop();
+            Timer.stop();
         }
     }
-    

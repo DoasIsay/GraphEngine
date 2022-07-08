@@ -2,6 +2,7 @@ package engine;
 
 import io.netty.util.Timeout;
 
+import java.util.concurrent.Future;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -36,15 +37,28 @@ public class Executor {
         }
     }
 
+    /*
+     * 仅对有网络访问的算子设定超时控制
+     * 会存在定时器过多影响性能？
+     * 定时器采用netty高性能的HashedWheelTimer
+     * Tcp发包每发一个包都会设置一个超时重传定时器，Tcp的性能因此而不行了？
+     * 实际性况待压测
+     */
+
     static <T> void invoke(Node node, T value) {
-        Operator operator = node.getOperator();
-        Timeout timeout = Timer.timeout(node.getTimeout(), TimeUnit.MILLISECONDS);
+        Timeout timeout = null;
+        if (0 != node.getTimeout()) {
+            timeout = Timer.timeout(node.getName(), node.getTimeout());
+        }
+
         try {
-            operator.invoke(value);
+            node.getOperator().invoke(value);
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            timeout.cancel();
+            if (timeout != null) {
+                timeout.cancel();
+            }
             notify(node, value);
             node.getGraph().close();
         }

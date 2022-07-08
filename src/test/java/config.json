@@ -6,7 +6,8 @@
     },
     {
       "name": "TestOperator2",
-      "operator": "TestOperator2"
+      "operator": "TestOperator2",
+      "depend": ["TestOperator1", "TestOperator5"]
     },
     {
       "name": "TestOperator3",
@@ -14,19 +15,23 @@
     },
     {
       "name": "TestOperator4",
-      "operator": "TestOperator4"
+      "operator": "TestOperator4",
+      "depend": ["TestOperator1", "TestOperator2", "TestOperator3", "TestOperator5"]
     },
     {
       "name": "TestOperator5",
-      "operator": "TestOperator5"
+      "operator": "TestOperator5",
+      "depend": ["TestOperator1", "TestOperator7"]
     },
     {
       "name": "TestOperator6",
-      "operator": "TestOperator6"
+      "operator": "TestOperator6",
+      "depend": ["TestOperator3", "TestOperator4"]
     },
     {
       "name": "TestOperator7",
-      "operator": "TestOperator7"
+      "operator": "TestOperator7",
+      "depend": ["TestOperator3"]
     },
     {
       "name": "TestOperator8",

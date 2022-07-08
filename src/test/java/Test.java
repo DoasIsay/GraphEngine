@@ -24,10 +24,6 @@ public class Test {
             output = value;
             System.out.println("invoke " + this.getClass().getSimpleName() + " output: " + output);
         }
-
-        @Override
-        public void register() {
-        }
     }
 
     @Load(type = "operator")
@@ -45,11 +41,10 @@ public class Test {
             System.out.println("invoke " + this.getClass().getSimpleName() + " output: " + output);
         }
 
-        @Override
-        public void register() {
-            depend("TestOperator5");
-            depend("TestOperator1");
-        }
+        @Depend(name = "TestOperator1")
+        TestOperator1 testOperator1;
+        @Depend(name = "TestOperator5")
+        TestOperator5 testOperator5;
     }
 
     @Load(type = "operator")
@@ -66,10 +61,6 @@ public class Test {
         public void invoke(String value) {
             output = value;
             System.out.println("invoke " + this.getClass().getSimpleName() + " output: " + output);
-        }
-
-        @Override
-        public void register() {
         }
     }
 
@@ -88,13 +79,14 @@ public class Test {
             System.out.println("invoke " + this.getClass().getSimpleName() + " output: " + output);
         }
 
-        @Override
-        public void register() {
-            depend("TestOperator2");
-            depend("TestOperator1");
-            depend("TestOperator5");
-            depend("TestOperator3");
-        }
+        @Depend(name = "TestOperator1")
+        TestOperator1 testOperator1;
+        @Depend(name = "TestOperator2")
+        TestOperator2 testOperator2;
+        @Depend(name = "TestOperator3")
+        TestOperator3 testOperator3;
+        @Depend(name = "TestOperator5")
+        TestOperator5 testOperator5;
     }
 
     @Load(type = "operator")
@@ -117,12 +109,10 @@ public class Test {
             System.out.println("invoke " + this.getClass().getSimpleName() + " output: " + testOperator7.outputString);
         }
 
+        @Depend(name = "TestOperator1")
+        TestOperator1 testOperator1;
+        @Depend(name = "TestOperator7")
         TestOperator7 testOperator7;
-        @Override
-        public void register() {
-            depend("TestOperator1");
-            testOperator7 = depend("TestOperator7");
-        }
     }
 
     @Load(type = "operator")
@@ -140,13 +130,10 @@ public class Test {
             System.out.println("invoke " + this.getClass().getSimpleName() + " output: " + output);
         }
 
+        @Depend(name = "TestOperator3")
+        TestOperator3 testOperator3;
         @Depend(name = "TestOperator4")
         TestOperator4 testOperator4;
-
-        @Override
-        public void register() {
-            depend("TestOperator3");
-        }
     }
 
     @Load(type = "operator")

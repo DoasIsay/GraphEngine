@@ -31,27 +31,32 @@ public class Graph {
     public Graph() {
     }
 
-    public Node getNode(String name) {
-        return nodeMap.get(name);
-    }
-
     public Graph addNode(Node node) {
         node.check();
         nodeMap.put(node.getName(), node);
         return this;
     }
 
+    Node getNode(String name) {
+        Node node = nodeMap.get(name);
+        if (node == null) {
+            throw new RuntimeException("not found node: " + name);
+        }
+
+        return node;
+    }
+
     Graph transform() {
         nodeConfigs.forEach(nodeConfig -> {
             String operatorName = nodeConfig.getOperator();
             Operator operator = OperatorFactory.get(operatorName);
+
             Node node = new Node();
             node.setName(nodeConfig.getName());
-            node.setGraph(this);
+            node.setConfig(nodeConfig);
             node.setOperator(operator);
-            if (operator != null) {
-                operator.setNode(node);
-            }
+            node.setGraph(this);
+
             addNode(node);
         });
 
@@ -63,7 +68,7 @@ public class Graph {
         while (iterator.hasNext()) {
             Map.Entry<String, Node> entry = iterator.next();
             Node node = entry.getValue();
-            List<Node> consumers = node.getOutNodes();
+            Collection<Node> consumers = node.getOutNodes();
 
             if (node.getDepends() == 0 && (consumers == null || consumers.isEmpty())) {
                 iterator.remove();
@@ -88,12 +93,8 @@ public class Graph {
 
     Graph generate() {
         nodeMap.values().forEach(node -> {
-            Operator operator = node.getOperator();
-            if (operator == null) {
-                return;
-            }
-            operator.register();
-            Injector.inject(operator);
+            node.getConfig().getDepend().forEach(dependName -> node.depend(getNode(dependName)));
+            Injector.inject(this, node.getOperator());
         });
         return this;
     }
@@ -152,7 +153,7 @@ public class Graph {
         return running.get() != 0;
     }
 
-    void removeSourceNode(List<Node> sourceNodes, Set<Node> nodes) {
+    void removeSourceNode(Collection<Node> sourceNodes, Set<Node> nodes) {
         sourceNodes.forEach(sourceNode -> {
             if (sourceNode.getDepends() != 0) {
                 return;
@@ -170,7 +171,7 @@ public class Graph {
         return sb;
     }
 
-    void toString(StringBuilder father, List<Node> nodes) {
+    void toString(StringBuilder father, Collection<Node> nodes) {
         Iterator<Node> iterable = nodes.iterator();
         while (iterable.hasNext()) {
             Node node = iterable.next();

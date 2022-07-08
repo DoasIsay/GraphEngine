@@ -2,6 +2,8 @@ package engine;
 
 import lombok.Data;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -12,5 +14,6 @@ public class NodeConfig {
     boolean async;
     String name;
     String operator;
-    Map<String, Object> config;
+    List<String> depend = Collections.emptyList();
+    Map<String, Object> config = Collections.emptyMap();
 }
