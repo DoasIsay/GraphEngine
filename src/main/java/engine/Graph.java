@@ -4,6 +4,10 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -11,9 +15,9 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class Graph {
     @Setter
-    List<NodeConfig> nodeConfigs = Collections.emptyList();
-
+    GraphConfig config;
     Map<String, Node> nodeMap = new HashMap<>();
+
     @Getter
     List<Node> deadNodes = new ArrayList<>();
     @Getter
@@ -27,6 +31,17 @@ public class Graph {
     GraphPool graphPool = null;
     @Getter
     AtomicInteger running = new AtomicInteger(0);
+
+    List<Future> futures = new ArrayList<Future>();
+    public void addFuture(Future future) {
+        synchronized (futures) {
+            futures.add(future);
+        }
+    }
+
+    void cancel() {
+        futures.forEach(future -> future.cancel(true));
+    }
 
     public Graph() {
     }
@@ -47,12 +62,11 @@ public class Graph {
     }
 
     Graph transform() {
-        nodeConfigs.forEach(nodeConfig -> {
+        config.getNodes().forEach(nodeConfig -> {
             String operatorName = nodeConfig.getOperator();
             Operator operator = OperatorFactory.get(operatorName);
 
             Node node = new Node();
-            node.setName(nodeConfig.getName());
             node.setConfig(nodeConfig);
             node.setOperator(operator);
             node.setGraph(this);
@@ -125,7 +139,7 @@ public class Graph {
     }
 
     public void clean() {
-        nodeConfigs = null;
+        config = null;
         nodeMap = null;
         deadNodes = null;
         sourceNodes = null;
@@ -135,7 +149,18 @@ public class Graph {
     }
 
     public <T> void run(T value) {
-        sourceNodes.forEach(node -> Executor.execute(node, value));
+        try {
+            Executor.submit(() -> sourceNodes.forEach(node -> Executor.execute(node, value))).get(config.getTimeout(), TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            cancel();
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            cancel();
+            e.printStackTrace();
+        } catch (TimeoutException e) {
+            cancel();
+            e.printStackTrace();
+        }
     }
 
     public void close() {

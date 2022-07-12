@@ -98,11 +98,14 @@ public class Test {
             output = null;
         }
 
+        Object object = new Object();
         @Override
         public void invoke(String value) {
             output = value;
             try {
-                Thread.sleep(10000);
+                synchronized (object) {
+                    object.wait();
+                }
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -185,14 +188,9 @@ public class Test {
         }
     }
 
-    @Data
-    static class Config {
-        List<NodeConfig> nodes;
-    }
-
     public static void main(String[] args) throws Exception {
-        Config config = new Gson().fromJson(new FileReader("src/test/java/config.json"), Config.class);
-        GraphPool graphPool = new GraphPool(config.getNodes());
+        GraphConfig config = new Gson().fromJson(new FileReader("src/test/java/config.json"), GraphConfig.class);
+        GraphPool graphPool = new GraphPool(config);
         Graph graph = graphPool.getResource();
 
         System.out.println("source:  " + graph.getSourceNodes());

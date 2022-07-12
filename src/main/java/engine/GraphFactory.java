@@ -5,23 +5,21 @@ import org.apache.commons.pool2.PooledObject;
 import org.apache.commons.pool2.PooledObjectFactory;
 import org.apache.commons.pool2.impl.DefaultPooledObject;
 
-import java.util.List;
-
 /**
  * @author xiewenwu
  */
 public class GraphFactory implements PooledObjectFactory<Graph> {
     @Setter
-    List<NodeConfig> nodeConfigs;
+    GraphConfig config;
 
-    public GraphFactory(List<NodeConfig> nodeConfigs) {
-        this.nodeConfigs = nodeConfigs;
+    public GraphFactory(GraphConfig config) {
+        this.config = config;
     }
 
     @Override
     public PooledObject<Graph> makeObject() throws Exception {
         Graph graph = new Graph();
-        graph.setNodeConfigs(nodeConfigs);
+        graph.setConfig(config);
         graph.build();
 
         return new DefaultPooledObject<>(graph);

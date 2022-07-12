@@ -11,7 +11,8 @@ import java.util.Map;
  */
 @Data
 public class NodeConfig {
-    boolean async;
+    boolean sync;
+    int timeout = 10;
     String name;
     String operator;
     List<String> depend = Collections.emptyList();

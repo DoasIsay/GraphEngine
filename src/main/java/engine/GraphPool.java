@@ -3,15 +3,13 @@ package engine;
 import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 
-import java.util.List;
-
 /**
  * @author xiewenwu
  */
 public class GraphPool {
     GenericObjectPool pool;
 
-    public GraphPool(List<NodeConfig> nodeConfigs) {
+    public GraphPool(GraphConfig config) {
         GenericObjectPoolConfig genericObjectPoolConfig = new GenericObjectPoolConfig();
         genericObjectPoolConfig.setMinIdle(1);
         genericObjectPoolConfig.setMaxIdle(6);
@@ -20,7 +18,7 @@ public class GraphPool {
         genericObjectPoolConfig.setBlockWhenExhausted(true);
         genericObjectPoolConfig.setTestOnBorrow(false);
         genericObjectPoolConfig.setTestOnCreate(false);
-        pool = new GenericObjectPool(new GraphFactory(nodeConfigs), genericObjectPoolConfig);
+        pool = new GenericObjectPool(new GraphFactory(config), genericObjectPoolConfig);
     }
 
     public Graph getResource() throws Exception {
@@ -43,6 +41,7 @@ public class GraphPool {
         pool.returnObject(graph);
     }
 
+    @Override
     public String toString() {
         return pool.toString();
     }

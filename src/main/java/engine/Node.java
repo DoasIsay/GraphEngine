@@ -14,23 +14,33 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Setter
 @Getter
 public class Node {
-    boolean async;
-    String name;
-    int timeout = 10;
     NodeConfig config;
 
+    AtomicInteger state;
     AtomicInteger depends;
     Map<String, Node> inNodes;
     Map<String, Node> outNodes;
 
     Operator operator;
-
     Graph graph;
 
     public Node() {
+        state = new AtomicInteger(0);
         depends = new AtomicInteger(0);
         inNodes = new HashMap<>();
         outNodes = new HashMap<>();
+    }
+
+    public String getName() {
+        return config.getName();
+    }
+
+    public boolean isSync() {
+        return config.isSync();
+    }
+
+    public int getTimeout() {
+        return config.getTimeout();
     }
 
     public Node depend(Node dependNode) {
@@ -76,6 +86,10 @@ public class Node {
         return depends.get();
     }
 
+    public boolean setState(int state) {
+        return this.state.compareAndSet(0, 1);
+    }
+
     public void reset() {
         operator.clean();
         if (inNodes == null) {
@@ -105,7 +119,7 @@ public class Node {
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof Operator) {
-            return ((Node) obj).getName().equals(name);
+            return ((Node) obj).getName().equals(getName());
         } else {
             return false;
         }
@@ -113,7 +127,7 @@ public class Node {
 
     @Override
     public int hashCode() {
-        return name.hashCode();
+        return getName().hashCode();
     }
 
     @Override

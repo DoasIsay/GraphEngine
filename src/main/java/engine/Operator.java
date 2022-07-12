@@ -14,7 +14,6 @@ public abstract class Operator<T> {
     public abstract void invoke(T value);
 
     List<Reflect.AnnotationField> outputFields;
-    List<Reflect.AnnotationField> dependFields;
 
     public List<Reflect.AnnotationField> getOutputAnnotationField() {
         if (outputFields == null) {
@@ -24,9 +23,11 @@ public abstract class Operator<T> {
         return outputFields;
     }
 
+    List<Reflect.AnnotationField> dependFields;
+
     public List<Reflect.AnnotationField> getDependAnnotationField() {
         if (dependFields == null) {
-            dependFields = Reflect.getAnnotationField(this, Output.class);
+            dependFields = Reflect.getAnnotationField(this, Depend.class);
         }
 
         return dependFields;
